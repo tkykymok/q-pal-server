@@ -1,0 +1,7 @@
+[mysql]
+dbname = "q_mate_db"
+user = "qmate"
+pass = "pass"
+host = "db"
+port = 3306
+sslmode = "false"

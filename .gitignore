@@ -1,0 +1,4 @@
+/docker/mysql/mysql_data/
+/app/api/tmp/
+/app/configs/.env
+/.idea/

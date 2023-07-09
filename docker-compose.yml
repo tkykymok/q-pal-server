@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  go:
+    build:
+      context: .
+      dockerfile: ./docker/golang/Dockerfile
+    container_name: go_q_mate_container
+    ports:
+      - "8080:8080"
+      - "2345:2345"
+    tty: true
+    volumes:
+      - ./app:/app
+  db:
+    build:
+      context: .
+      dockerfile: ./docker/mysql/Dockerfile
+    container_name: mysql_q_mate_container
+    environment:
+      MYSQL_USER: qmate
+      MYSQL_PASSWORD: pass
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: q_mate_db
+    volumes:
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - ./docker/mysql/mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
