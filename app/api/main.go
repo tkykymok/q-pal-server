@@ -2,6 +2,7 @@ package main
 
 import (
 	"app/api/routes"
+	"app/pkg/reservation"
 	"app/pkg/todo"
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
@@ -53,7 +54,8 @@ func main() {
 
 	// routing
 	api := app.Group("/api")
-	routes.TodoRouter(api, todo.NewService(todo.NewRepo()))
+	routes.TodoRouter(api, todo.NewUsecase(todo.NewRepo()))
+	routes.ReservationRouter(api, reservation.NewUsecase(reservation.NewRepo()))
 
 	log.Fatal(app.Listen(":8080"))
 }

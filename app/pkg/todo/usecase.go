@@ -19,19 +19,19 @@ type Usecase interface {
 	BroadcastNewTodo(todo *models.Todo) error
 }
 
-type service struct {
+type usecase struct {
 	repository Repository
 }
 
-func NewService(r Repository) Usecase {
-	return &service{
+func NewUsecase(r Repository) Usecase {
+	return &usecase{
 		repository: r,
 	}
 }
 
-func (s service) FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error) {
+func (u usecase) FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error) {
 	todos := make([]outputs.Todo, 0)
-	result, err := s.repository.ReadAllTodos(ctx)
+	result, err := u.repository.ReadAllTodos(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +49,9 @@ func (s service) FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error) {
 	return &todos, nil
 }
 
-func (s service) FetchTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]outputs.TodoWithRelated, error) {
+func (u usecase) FetchTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]outputs.TodoWithRelated, error) {
 	todos := make([]outputs.TodoWithRelated, 0)
-	result, err := s.repository.ReadTodosWithRelated(ctx, request)
+	result, err := u.repository.ReadTodosWithRelated(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +70,8 @@ func (s service) FetchTodosWithRelated(ctx context.Context, request *requests.Ge
 	return &todos, nil
 }
 
-func (s service) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, error) {
-	result, err := s.repository.ReadTodoById(ctx, id)
+func (u usecase) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, error) {
+	result, err := u.repository.ReadTodoById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -86,33 +86,33 @@ func (s service) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, erro
 	return &todo, nil
 }
 
-func (s service) InsertTodo(ctx context.Context, todo *requests.AddTodo) error {
+func (u usecase) InsertTodo(ctx context.Context, todo *requests.AddTodo) error {
 	cTodo := models.Todo{
 		Title: todo.Title,
 	}
-	err := s.repository.CreateTodo(ctx, &cTodo)
+	err := u.repository.CreateTodo(ctx, &cTodo)
 	if err != nil {
 		return err
 	}
 
 	// broadcast the new Todo
-	err = s.BroadcastNewTodo(&cTodo)
+	err = u.BroadcastNewTodo(&cTodo)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s service) UpdateTodo(ctx context.Context, todo *requests.UpdateTodo) error {
+func (u usecase) UpdateTodo(ctx context.Context, todo *requests.UpdateTodo) error {
 	uTodo := models.Todo{
 		ID:        todo.ID,
 		Title:     todo.Title,
 		Completed: todo.Completed,
 	}
-	return s.repository.UpdateTodo(ctx, &uTodo)
+	return u.repository.UpdateTodo(ctx, &uTodo)
 }
 
-func (s service) BroadcastNewTodo(todo *models.Todo) error {
+func (u usecase) BroadcastNewTodo(todo *models.Todo) error {
 	// Convert the Todo model to presenter.Todo
 	pTodo := presenter.Todo{
 		ID:        todo.ID,

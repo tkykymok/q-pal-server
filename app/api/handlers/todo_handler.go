@@ -13,13 +13,13 @@ import (
 	"net/http"
 )
 
-func GetAllTodos(service todo.Usecase) fiber.Handler {
+func GetAllTodos(usecase todo.Usecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Create cancellable context.
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		fetched, err := service.FetchAllTodos(customContext)
+		fetched, err := usecase.FetchAllTodos(customContext)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
@@ -28,7 +28,7 @@ func GetAllTodos(service todo.Usecase) fiber.Handler {
 	}
 }
 
-func GetTodosWithRelated(service todo.Usecase) fiber.Handler {
+func GetTodosWithRelated(usecase todo.Usecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -39,7 +39,7 @@ func GetTodosWithRelated(service todo.Usecase) fiber.Handler {
 			log.Fatal(err)
 		}
 
-		fetched, err := service.FetchTodosWithRelated(customContext, &request)
+		fetched, err := usecase.FetchTodosWithRelated(customContext, &request)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
@@ -48,14 +48,14 @@ func GetTodosWithRelated(service todo.Usecase) fiber.Handler {
 	}
 }
 
-func GetTodoById(service todo.Usecase) fiber.Handler {
+func GetTodoById(usecase todo.Usecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		id, _ := c.ParamsInt("id", 0)
 
-		fetched, err := service.FetchTodoById(customContext, id)
+		fetched, err := usecase.FetchTodoById(customContext, id)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
@@ -64,7 +64,7 @@ func GetTodoById(service todo.Usecase) fiber.Handler {
 	}
 }
 
-func AddTodo(service todo.Usecase) fiber.Handler {
+func AddTodo(usecase todo.Usecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -82,7 +82,7 @@ func AddTodo(service todo.Usecase) fiber.Handler {
 			return c.JSON(presenter.ValidationErrorResponse(err))
 		}
 
-		err = service.InsertTodo(customContext, &request)
+		err = usecase.InsertTodo(customContext, &request)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
@@ -92,7 +92,7 @@ func AddTodo(service todo.Usecase) fiber.Handler {
 	}
 }
 
-func UpdateTodo(service todo.Usecase) fiber.Handler {
+func UpdateTodo(usecase todo.Usecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -111,7 +111,7 @@ func UpdateTodo(service todo.Usecase) fiber.Handler {
 			return c.JSON(presenter.ValidationErrorResponse(err))
 		}
 
-		err = service.UpdateTodo(customContext, &request)
+		err = usecase.UpdateTodo(customContext, &request)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
