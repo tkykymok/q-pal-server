@@ -2,10 +2,12 @@ package routes
 
 import (
 	"app/api/handlers"
-	"app/pkg/reservation"
+	"app/pkg/core/usecase"
 	"github.com/gofiber/fiber/v2"
 )
 
-func ReservationRouter(app fiber.Router, usecase reservation.Usecase) {
-	app.Get("/reservations", handlers.GetReservationsByStoreId(usecase))
+func ReservationRouter(app fiber.Router, usecase usecase.ReservationUsecase) {
+	app.Get("/reservations", handlers.GetTodayReservations(usecase))
+	app.Get("/lineEndWaitTime", handlers.GetLineEndWaitTime(usecase))
+	app.Get("/individualWaitTime", handlers.GetIndividualWaitTime(usecase))
 }

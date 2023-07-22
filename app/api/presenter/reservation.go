@@ -1,6 +1,7 @@
 package presenter
 
 import (
+	"app/pkg/enum"
 	"app/pkg/outputs"
 	"app/pkg/utils"
 	"github.com/gofiber/fiber/v2"
@@ -17,13 +18,18 @@ type Reservation struct {
 	HoldStartDatetime    string   `json:"holdStartDatetime" `
 	ServiceStartDatetime string   `json:"serviceStartDatetime" `
 	ServiceEndDatetime   string   `json:"serviceEndDatetime" `
-	Status               null.Int `json:"status" `
+	Status               string   `json:"status" `
 	ArrivalFlag          bool     `json:"arrivalFlag" `
-	CancelFlag           bool     `json:"cancelFlag" `
 	CancelType           null.Int `json:"cancelType" `
 }
 
-func GetReservationsByStoreIdResponse(data *[]outputs.Reservation) *fiber.Map {
+type WaitTime struct {
+	ReservationNumber int `json:"reservationNumber" `
+	Position          int `json:"position"`
+	Time              int `json:"time" `
+}
+
+func GetReservationsResponse(data *[]outputs.Reservation) *fiber.Map {
 	reservations := make([]Reservation, 0)
 	for _, t := range *data {
 		reservation := Reservation{
@@ -36,7 +42,7 @@ func GetReservationsByStoreIdResponse(data *[]outputs.Reservation) *fiber.Map {
 			HoldStartDatetime:    utils.ConvertNTimeToString(t.HoldStartDatetime),
 			ServiceStartDatetime: utils.ConvertNTimeToString(t.ServiceStartDatetime),
 			ServiceEndDatetime:   utils.ConvertNTimeToString(t.ServiceEndDatetime),
-			Status:               t.Status,
+			Status:               enum.ReservationStatusNames[enum.ReservationStatus(t.Status)],
 			ArrivalFlag:          t.ArrivalFlag,
 			CancelType:           t.CancelType,
 		}
@@ -45,5 +51,17 @@ func GetReservationsByStoreIdResponse(data *[]outputs.Reservation) *fiber.Map {
 
 	return &fiber.Map{
 		"reservations": reservations,
+	}
+}
+
+func GetWaitTimeResponse(data *outputs.WaitTime) *fiber.Map {
+	waitTime := WaitTime{
+		ReservationNumber: data.ReservationNumber,
+		Position:          data.Position,
+		Time:              data.Time,
+	}
+
+	return &fiber.Map{
+		"data": waitTime,
 	}
 }

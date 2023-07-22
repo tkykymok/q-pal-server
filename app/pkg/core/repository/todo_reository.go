@@ -1,4 +1,4 @@
-package todo
+package repository
 
 import (
 	"app/api/requests"
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-type Repository interface {
+type TodoRepository interface {
 	ReadAllTodos(ctx context.Context) (models.TodoSlice, error)
 	ReadTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]exmodels.TodoWithRelated, error)
 	ReadTodoById(ctx context.Context, id int) (*models.Todo, error)
@@ -19,18 +19,18 @@ type Repository interface {
 	UpdateTodo(ctx context.Context, todo *models.Todo) error
 }
 
-type repository struct {
+type todoRepository struct {
 }
 
-func NewRepo() Repository {
-	return &repository{}
+func NewTodoRepo() TodoRepository {
+	return &todoRepository{}
 }
 
-func (r repository) ReadAllTodos(ctx context.Context) (models.TodoSlice, error) {
+func (r todoRepository) ReadAllTodos(ctx context.Context) (models.TodoSlice, error) {
 	return models.Todos().AllG(ctx)
 }
 
-func (r repository) ReadTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]exmodels.TodoWithRelated, error) {
+func (r todoRepository) ReadTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]exmodels.TodoWithRelated, error) {
 	// SELECTするカラム
 	selectCols := []string{
 		models.TodoTableColumns.ID,
@@ -62,11 +62,11 @@ func (r repository) ReadTodosWithRelated(ctx context.Context, request *requests.
 	return &result, nil
 }
 
-func (r repository) ReadTodoById(ctx context.Context, id int) (*models.Todo, error) {
+func (r todoRepository) ReadTodoById(ctx context.Context, id int) (*models.Todo, error) {
 	return models.FindTodoG(ctx, id)
 }
 
-func (r repository) CreateTodo(ctx context.Context, todo *models.Todo) error {
+func (r todoRepository) CreateTodo(ctx context.Context, todo *models.Todo) error {
 	err := todo.InsertG(ctx, boil.Infer())
 	if err != nil {
 		return nil
@@ -74,7 +74,7 @@ func (r repository) CreateTodo(ctx context.Context, todo *models.Todo) error {
 	return err
 }
 
-func (r repository) UpdateTodo(ctx context.Context, todo *models.Todo) error {
+func (r todoRepository) UpdateTodo(ctx context.Context, todo *models.Todo) error {
 	_, err := todo.UpdateG(ctx, boil.Infer())
 	if err != nil {
 		return nil

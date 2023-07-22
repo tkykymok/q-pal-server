@@ -26,6 +26,7 @@ import (
 // MenuSet is an object representing the database table.
 type MenuSet struct {
 	SetID    int               `boil:"set_id" json:"set_id" toml:"set_id" yaml:"set_id"`
+	StoreID  null.Int          `boil:"store_id" json:"store_id,omitempty" toml:"store_id" yaml:"store_id,omitempty"`
 	SetName  null.String       `boil:"set_name" json:"set_name,omitempty" toml:"set_name" yaml:"set_name,omitempty"`
 	SetPrice types.NullDecimal `boil:"set_price" json:"set_price,omitempty" toml:"set_price" yaml:"set_price,omitempty"`
 
@@ -35,20 +36,24 @@ type MenuSet struct {
 
 var MenuSetColumns = struct {
 	SetID    string
+	StoreID  string
 	SetName  string
 	SetPrice string
 }{
 	SetID:    "set_id",
+	StoreID:  "store_id",
 	SetName:  "set_name",
 	SetPrice: "set_price",
 }
 
 var MenuSetTableColumns = struct {
 	SetID    string
+	StoreID  string
 	SetName  string
 	SetPrice string
 }{
 	SetID:    "menu_sets.set_id",
+	StoreID:  "menu_sets.store_id",
 	SetName:  "menu_sets.set_name",
 	SetPrice: "menu_sets.set_price",
 }
@@ -83,24 +88,29 @@ func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
 
 var MenuSetWhere = struct {
 	SetID    whereHelperint
+	StoreID  whereHelpernull_Int
 	SetName  whereHelpernull_String
 	SetPrice whereHelpertypes_NullDecimal
 }{
 	SetID:    whereHelperint{field: "`menu_sets`.`set_id`"},
+	StoreID:  whereHelpernull_Int{field: "`menu_sets`.`store_id`"},
 	SetName:  whereHelpernull_String{field: "`menu_sets`.`set_name`"},
 	SetPrice: whereHelpertypes_NullDecimal{field: "`menu_sets`.`set_price`"},
 }
 
 // MenuSetRels is where relationship names are stored.
 var MenuSetRels = struct {
-	Menus string
+	Store             string
+	SetMenuSetDetails string
 }{
-	Menus: "Menus",
+	Store:             "Store",
+	SetMenuSetDetails: "SetMenuSetDetails",
 }
 
 // menuSetR is where relationships are stored.
 type menuSetR struct {
-	Menus MenuSlice `boil:"Menus" json:"Menus" toml:"Menus" yaml:"Menus"`
+	Store             *Store             `boil:"Store" json:"Store" toml:"Store" yaml:"Store"`
+	SetMenuSetDetails MenuSetDetailSlice `boil:"SetMenuSetDetails" json:"SetMenuSetDetails" toml:"SetMenuSetDetails" yaml:"SetMenuSetDetails"`
 }
 
 // NewStruct creates a new relationship struct
@@ -108,19 +118,26 @@ func (*menuSetR) NewStruct() *menuSetR {
 	return &menuSetR{}
 }
 
-func (r *menuSetR) GetMenus() MenuSlice {
+func (r *menuSetR) GetStore() *Store {
 	if r == nil {
 		return nil
 	}
-	return r.Menus
+	return r.Store
+}
+
+func (r *menuSetR) GetSetMenuSetDetails() MenuSetDetailSlice {
+	if r == nil {
+		return nil
+	}
+	return r.SetMenuSetDetails
 }
 
 // menuSetL is where Load methods for each relationship are stored.
 type menuSetL struct{}
 
 var (
-	menuSetAllColumns            = []string{"set_id", "set_name", "set_price"}
-	menuSetColumnsWithoutDefault = []string{"set_id", "set_name", "set_price"}
+	menuSetAllColumns            = []string{"set_id", "store_id", "set_name", "set_price"}
+	menuSetColumnsWithoutDefault = []string{"set_id", "store_id", "set_name", "set_price"}
 	menuSetColumnsWithDefault    = []string{}
 	menuSetPrimaryKeyColumns     = []string{"set_id"}
 	menuSetGeneratedColumns      = []string{}
@@ -424,24 +441,158 @@ func (q menuSetQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bo
 	return count > 0, nil
 }
 
-// Menus retrieves all the menu's Menus with an executor.
-func (o *MenuSet) Menus(mods ...qm.QueryMod) menuQuery {
+// Store pointed to by the foreign key.
+func (o *MenuSet) Store(mods ...qm.QueryMod) storeQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`store_id` = ?", o.StoreID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Stores(queryMods...)
+}
+
+// SetMenuSetDetails retrieves all the menu_set_detail's MenuSetDetails with an executor via set_id column.
+func (o *MenuSet) SetMenuSetDetails(mods ...qm.QueryMod) menuSetDetailQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.InnerJoin("`menu_set_details` on `menus`.`menu_id` = `menu_set_details`.`menu_id`"),
 		qm.Where("`menu_set_details`.`set_id`=?", o.SetID),
 	)
 
-	return Menus(queryMods...)
+	return MenuSetDetails(queryMods...)
 }
 
-// LoadMenus allows an eager lookup of values, cached into the
+// LoadStore allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (menuSetL) LoadStore(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMenuSet interface{}, mods queries.Applicator) error {
+	var slice []*MenuSet
+	var object *MenuSet
+
+	if singular {
+		var ok bool
+		object, ok = maybeMenuSet.(*MenuSet)
+		if !ok {
+			object = new(MenuSet)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeMenuSet)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeMenuSet))
+			}
+		}
+	} else {
+		s, ok := maybeMenuSet.(*[]*MenuSet)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeMenuSet)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeMenuSet))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &menuSetR{}
+		}
+		if !queries.IsNil(object.StoreID) {
+			args = append(args, object.StoreID)
+		}
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &menuSetR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.StoreID) {
+					continue Outer
+				}
+			}
+
+			if !queries.IsNil(obj.StoreID) {
+				args = append(args, obj.StoreID)
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`stores`),
+		qm.WhereIn(`stores.store_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Store")
+	}
+
+	var resultSlice []*Store
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Store")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for stores")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stores")
+	}
+
+	if len(storeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Store = foreign
+		if foreign.R == nil {
+			foreign.R = &storeR{}
+		}
+		foreign.R.MenuSets = append(foreign.R.MenuSets, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.StoreID, foreign.StoreID) {
+				local.R.Store = foreign
+				if foreign.R == nil {
+					foreign.R = &storeR{}
+				}
+				foreign.R.MenuSets = append(foreign.R.MenuSets, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadSetMenuSetDetails allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (menuSetL) LoadMenus(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMenuSet interface{}, mods queries.Applicator) error {
+func (menuSetL) LoadSetMenuSetDetails(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMenuSet interface{}, mods queries.Applicator) error {
 	var slice []*MenuSet
 	var object *MenuSet
 
@@ -495,10 +646,8 @@ func (menuSetL) LoadMenus(ctx context.Context, e boil.ContextExecutor, singular 
 	}
 
 	query := NewQuery(
-		qm.Select("`menus`.`menu_id`, `menus`.`store_id`, `menus`.`menu_name`, `menus`.`price`, `menus`.`time`, `a`.`set_id`"),
-		qm.From("`menus`"),
-		qm.InnerJoin("`menu_set_details` as `a` on `menus`.`menu_id` = `a`.`menu_id`"),
-		qm.WhereIn("`a`.`set_id` in ?", args...),
+		qm.From(`menu_set_details`),
+		qm.WhereIn(`menu_set_details.set_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -506,36 +655,22 @@ func (menuSetL) LoadMenus(ctx context.Context, e boil.ContextExecutor, singular 
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load menus")
+		return errors.Wrap(err, "failed to eager load menu_set_details")
 	}
 
-	var resultSlice []*Menu
-
-	var localJoinCols []int
-	for results.Next() {
-		one := new(Menu)
-		var localJoinCol int
-
-		err = results.Scan(&one.MenuID, &one.StoreID, &one.MenuName, &one.Price, &one.Time, &localJoinCol)
-		if err != nil {
-			return errors.Wrap(err, "failed to scan eager loaded results for menus")
-		}
-		if err = results.Err(); err != nil {
-			return errors.Wrap(err, "failed to plebian-bind eager loaded slice menus")
-		}
-
-		resultSlice = append(resultSlice, one)
-		localJoinCols = append(localJoinCols, localJoinCol)
+	var resultSlice []*MenuSetDetail
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice menu_set_details")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on menus")
+		return errors.Wrap(err, "failed to close results in eager load on menu_set_details")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for menus")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for menu_set_details")
 	}
 
-	if len(menuAfterSelectHooks) != 0 {
+	if len(menuSetDetailAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -543,25 +678,24 @@ func (menuSetL) LoadMenus(ctx context.Context, e boil.ContextExecutor, singular 
 		}
 	}
 	if singular {
-		object.R.Menus = resultSlice
+		object.R.SetMenuSetDetails = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &menuR{}
+				foreign.R = &menuSetDetailR{}
 			}
-			foreign.R.SetMenuSets = append(foreign.R.SetMenuSets, object)
+			foreign.R.Set = object
 		}
 		return nil
 	}
 
-	for i, foreign := range resultSlice {
-		localJoinCol := localJoinCols[i]
+	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if local.SetID == localJoinCol {
-				local.R.Menus = append(local.R.Menus, foreign)
+			if local.SetID == foreign.SetID {
+				local.R.SetMenuSetDetails = append(local.R.SetMenuSetDetails, foreign)
 				if foreign.R == nil {
-					foreign.R = &menuR{}
+					foreign.R = &menuSetDetailR{}
 				}
-				foreign.R.SetMenuSets = append(foreign.R.SetMenuSets, local)
+				foreign.R.Set = local
 				break
 			}
 		}
@@ -570,177 +704,162 @@ func (menuSetL) LoadMenus(ctx context.Context, e boil.ContextExecutor, singular 
 	return nil
 }
 
-// AddMenusG adds the given related objects to the existing relationships
-// of the menu_set, optionally inserting them as new records.
-// Appends related to o.R.Menus.
-// Sets related.R.SetMenuSets appropriately.
+// SetStoreG of the menuSet to the related item.
+// Sets o.R.Store to related.
+// Adds o to related.R.MenuSets.
 // Uses the global database handle.
-func (o *MenuSet) AddMenusG(ctx context.Context, insert bool, related ...*Menu) error {
-	return o.AddMenus(ctx, boil.GetContextDB(), insert, related...)
+func (o *MenuSet) SetStoreG(ctx context.Context, insert bool, related *Store) error {
+	return o.SetStore(ctx, boil.GetContextDB(), insert, related)
 }
 
-// AddMenus adds the given related objects to the existing relationships
+// SetStore of the menuSet to the related item.
+// Sets o.R.Store to related.
+// Adds o to related.R.MenuSets.
+func (o *MenuSet) SetStore(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Store) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `menu_sets` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"store_id"}),
+		strmangle.WhereClause("`", "`", 0, menuSetPrimaryKeyColumns),
+	)
+	values := []interface{}{related.StoreID, o.SetID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.StoreID, related.StoreID)
+	if o.R == nil {
+		o.R = &menuSetR{
+			Store: related,
+		}
+	} else {
+		o.R.Store = related
+	}
+
+	if related.R == nil {
+		related.R = &storeR{
+			MenuSets: MenuSetSlice{o},
+		}
+	} else {
+		related.R.MenuSets = append(related.R.MenuSets, o)
+	}
+
+	return nil
+}
+
+// RemoveStoreG relationship.
+// Sets o.R.Store to nil.
+// Removes o from all passed in related items' relationships struct.
+// Uses the global database handle.
+func (o *MenuSet) RemoveStoreG(ctx context.Context, related *Store) error {
+	return o.RemoveStore(ctx, boil.GetContextDB(), related)
+}
+
+// RemoveStore relationship.
+// Sets o.R.Store to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *MenuSet) RemoveStore(ctx context.Context, exec boil.ContextExecutor, related *Store) error {
+	var err error
+
+	queries.SetScanner(&o.StoreID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("store_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Store = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.MenuSets {
+		if queries.Equal(o.StoreID, ri.StoreID) {
+			continue
+		}
+
+		ln := len(related.R.MenuSets)
+		if ln > 1 && i < ln-1 {
+			related.R.MenuSets[i] = related.R.MenuSets[ln-1]
+		}
+		related.R.MenuSets = related.R.MenuSets[:ln-1]
+		break
+	}
+	return nil
+}
+
+// AddSetMenuSetDetailsG adds the given related objects to the existing relationships
 // of the menu_set, optionally inserting them as new records.
-// Appends related to o.R.Menus.
-// Sets related.R.SetMenuSets appropriately.
-func (o *MenuSet) AddMenus(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Menu) error {
+// Appends related to o.R.SetMenuSetDetails.
+// Sets related.R.Set appropriately.
+// Uses the global database handle.
+func (o *MenuSet) AddSetMenuSetDetailsG(ctx context.Context, insert bool, related ...*MenuSetDetail) error {
+	return o.AddSetMenuSetDetails(ctx, boil.GetContextDB(), insert, related...)
+}
+
+// AddSetMenuSetDetails adds the given related objects to the existing relationships
+// of the menu_set, optionally inserting them as new records.
+// Appends related to o.R.SetMenuSetDetails.
+// Sets related.R.Set appropriately.
+func (o *MenuSet) AddSetMenuSetDetails(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*MenuSetDetail) error {
 	var err error
 	for _, rel := range related {
 		if insert {
+			rel.SetID = o.SetID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `menu_set_details` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"set_id"}),
+				strmangle.WhereClause("`", "`", 0, menuSetDetailPrimaryKeyColumns),
+			)
+			values := []interface{}{o.SetID, rel.SetID, rel.StoreID, rel.MenuID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.SetID = o.SetID
 		}
 	}
 
-	for _, rel := range related {
-		query := "insert into `menu_set_details` (`set_id`, `menu_id`) values (?, ?)"
-		values := []interface{}{o.SetID, rel.MenuID}
-
-		if boil.IsDebug(ctx) {
-			writer := boil.DebugWriterFrom(ctx)
-			fmt.Fprintln(writer, query)
-			fmt.Fprintln(writer, values)
-		}
-		_, err = exec.ExecContext(ctx, query, values...)
-		if err != nil {
-			return errors.Wrap(err, "failed to insert into join table")
-		}
-	}
 	if o.R == nil {
 		o.R = &menuSetR{
-			Menus: related,
+			SetMenuSetDetails: related,
 		}
 	} else {
-		o.R.Menus = append(o.R.Menus, related...)
+		o.R.SetMenuSetDetails = append(o.R.SetMenuSetDetails, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &menuR{
-				SetMenuSets: MenuSetSlice{o},
+			rel.R = &menuSetDetailR{
+				Set: o,
 			}
 		} else {
-			rel.R.SetMenuSets = append(rel.R.SetMenuSets, o)
+			rel.R.Set = o
 		}
 	}
 	return nil
-}
-
-// SetMenusG removes all previously related items of the
-// menu_set replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.SetMenuSets's Menus accordingly.
-// Replaces o.R.Menus with related.
-// Sets related.R.SetMenuSets's Menus accordingly.
-// Uses the global database handle.
-func (o *MenuSet) SetMenusG(ctx context.Context, insert bool, related ...*Menu) error {
-	return o.SetMenus(ctx, boil.GetContextDB(), insert, related...)
-}
-
-// SetMenus removes all previously related items of the
-// menu_set replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.SetMenuSets's Menus accordingly.
-// Replaces o.R.Menus with related.
-// Sets related.R.SetMenuSets's Menus accordingly.
-func (o *MenuSet) SetMenus(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Menu) error {
-	query := "delete from `menu_set_details` where `set_id` = ?"
-	values := []interface{}{o.SetID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	removeMenusFromSetMenuSetsSlice(o, related)
-	if o.R != nil {
-		o.R.Menus = nil
-	}
-
-	return o.AddMenus(ctx, exec, insert, related...)
-}
-
-// RemoveMenusG relationships from objects passed in.
-// Removes related items from R.Menus (uses pointer comparison, removal does not keep order)
-// Sets related.R.SetMenuSets.
-// Uses the global database handle.
-func (o *MenuSet) RemoveMenusG(ctx context.Context, related ...*Menu) error {
-	return o.RemoveMenus(ctx, boil.GetContextDB(), related...)
-}
-
-// RemoveMenus relationships from objects passed in.
-// Removes related items from R.Menus (uses pointer comparison, removal does not keep order)
-// Sets related.R.SetMenuSets.
-func (o *MenuSet) RemoveMenus(ctx context.Context, exec boil.ContextExecutor, related ...*Menu) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	query := fmt.Sprintf(
-		"delete from `menu_set_details` where `set_id` = ? and `menu_id` in (%s)",
-		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
-	)
-	values := []interface{}{o.SetID}
-	for _, rel := range related {
-		values = append(values, rel.MenuID)
-	}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err = exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-	removeMenusFromSetMenuSetsSlice(o, related)
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.Menus {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.Menus)
-			if ln > 1 && i < ln-1 {
-				o.R.Menus[i] = o.R.Menus[ln-1]
-			}
-			o.R.Menus = o.R.Menus[:ln-1]
-			break
-		}
-	}
-
-	return nil
-}
-
-func removeMenusFromSetMenuSetsSlice(o *MenuSet, related []*Menu) {
-	for _, rel := range related {
-		if rel.R == nil {
-			continue
-		}
-		for i, ri := range rel.R.SetMenuSets {
-			if o.SetID != ri.SetID {
-				continue
-			}
-
-			ln := len(rel.R.SetMenuSets)
-			if ln > 1 && i < ln-1 {
-				rel.R.SetMenuSets[i] = rel.R.SetMenuSets[ln-1]
-			}
-			rel.R.SetMenuSets = rel.R.SetMenuSets[:ln-1]
-			break
-		}
-	}
 }
 
 // MenuSets retrieves all the records using an executor.

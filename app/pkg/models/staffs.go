@@ -47,9 +47,9 @@ var StaffTableColumns = struct {
 	Name          string
 	CognitoUserID string
 }{
-	StaffID:       "staff.staff_id",
-	Name:          "staff.name",
-	CognitoUserID: "staff.cognito_user_id",
+	StaffID:       "staffs.staff_id",
+	Name:          "staffs.name",
+	CognitoUserID: "staffs.cognito_user_id",
 }
 
 // Generated where
@@ -59,9 +59,9 @@ var StaffWhere = struct {
 	Name          whereHelpernull_String
 	CognitoUserID whereHelpernull_String
 }{
-	StaffID:       whereHelperint{field: "`staff`.`staff_id`"},
-	Name:          whereHelpernull_String{field: "`staff`.`name`"},
-	CognitoUserID: whereHelpernull_String{field: "`staff`.`cognito_user_id`"},
+	StaffID:       whereHelperint{field: "`staffs`.`staff_id`"},
+	Name:          whereHelpernull_String{field: "`staffs`.`name`"},
+	CognitoUserID: whereHelpernull_String{field: "`staffs`.`cognito_user_id`"},
 }
 
 // StaffRels is where relationship names are stored.
@@ -341,7 +341,7 @@ func (q staffQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Staff,
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for staff")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for staffs")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -390,7 +390,7 @@ func (q staffQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count staff rows")
+		return 0, errors.Wrap(err, "models: failed to count staffs rows")
 	}
 
 	return count, nil
@@ -411,7 +411,7 @@ func (q staffQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if staff exists")
+		return false, errors.Wrap(err, "models: failed to check if staffs exists")
 	}
 
 	return count > 0, nil
@@ -513,8 +513,8 @@ func (staffL) LoadActiveStaff(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.From(`active_staff`),
-		qm.WhereIn(`active_staff.staff_id in ?`, args...),
+		qm.From(`active_staffs`),
+		qm.WhereIn(`active_staffs.staff_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -531,10 +531,10 @@ func (staffL) LoadActiveStaff(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for active_staff")
+		return errors.Wrap(err, "failed to close results of eager load for active_staffs")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for active_staff")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for active_staffs")
 	}
 
 	if len(activeStaffAfterSelectHooks) != 0 {
@@ -841,7 +841,7 @@ func (o *Staff) SetActiveStaff(ctx context.Context, exec boil.ContextExecutor, i
 		}
 	} else {
 		updateQuery := fmt.Sprintf(
-			"UPDATE `active_staff` SET %s WHERE %s",
+			"UPDATE `active_staffs` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, []string{"staff_id"}),
 			strmangle.WhereClause("`", "`", 0, activeStaffPrimaryKeyColumns),
 		)
@@ -1207,10 +1207,10 @@ func removeStoresFromStaffsSlice(o *Staff, related []*Store) {
 
 // Staffs retrieves all the records using an executor.
 func Staffs(mods ...qm.QueryMod) staffQuery {
-	mods = append(mods, qm.From("`staff`"))
+	mods = append(mods, qm.From("`staffs`"))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"`staff`.*"})
+		queries.SetSelect(q, []string{"`staffs`.*"})
 	}
 
 	return staffQuery{q}
@@ -1231,7 +1231,7 @@ func FindStaff(ctx context.Context, exec boil.ContextExecutor, staffID int, sele
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `staff` where `staff_id`=?", sel,
+		"select %s from `staffs` where `staff_id`=?", sel,
 	)
 
 	q := queries.Raw(query, staffID)
@@ -1241,7 +1241,7 @@ func FindStaff(ctx context.Context, exec boil.ContextExecutor, staffID int, sele
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from staff")
+		return nil, errors.Wrap(err, "models: unable to select from staffs")
 	}
 
 	if err = staffObj.doAfterSelectHooks(ctx, exec); err != nil {
@@ -1260,7 +1260,7 @@ func (o *Staff) InsertG(ctx context.Context, columns boil.Columns) error {
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *Staff) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no staff provided for insertion")
+		return errors.New("models: no staffs provided for insertion")
 	}
 
 	var err error
@@ -1293,15 +1293,15 @@ func (o *Staff) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `staff` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `staffs` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `staff` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `staffs` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `staff` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, staffPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `staffs` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, staffPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -1318,7 +1318,7 @@ func (o *Staff) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into staff")
+		return errors.Wrap(err, "models: unable to insert into staffs")
 	}
 
 	var identifierCols []interface{}
@@ -1338,7 +1338,7 @@ func (o *Staff) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for staff")
+		return errors.Wrap(err, "models: unable to populate default values for staffs")
 	}
 
 CacheNoHooks:
@@ -1380,10 +1380,10 @@ func (o *Staff) Update(ctx context.Context, exec boil.ContextExecutor, columns b
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update staff, could not build whitelist")
+			return 0, errors.New("models: unable to update staffs, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `staff` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `staffs` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, staffPrimaryKeyColumns),
 		)
@@ -1403,12 +1403,12 @@ func (o *Staff) Update(ctx context.Context, exec boil.ContextExecutor, columns b
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update staff row")
+		return 0, errors.Wrap(err, "models: unable to update staffs row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for staffs")
 	}
 
 	if !cached {
@@ -1431,12 +1431,12 @@ func (q staffQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for staff")
+		return 0, errors.Wrap(err, "models: unable to update all for staffs")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for staff")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for staffs")
 	}
 
 	return rowsAff, nil
@@ -1474,7 +1474,7 @@ func (o StaffSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `staff` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `staffs` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, staffPrimaryKeyColumns, len(o)))
 
@@ -1508,7 +1508,7 @@ var mySQLStaffUniqueColumns = []string{
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *Staff) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no staff provided for upsert")
+		return errors.New("models: no staffs provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
@@ -1564,13 +1564,13 @@ func (o *Staff) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCol
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("models: unable to upsert staff, could not build update column list")
+			return errors.New("models: unable to upsert staffs, could not build update column list")
 		}
 
 		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`staff`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`staffs`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `staff` WHERE %s",
+			"SELECT %s FROM `staffs` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -1602,7 +1602,7 @@ func (o *Staff) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCol
 	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert for staff")
+		return errors.Wrap(err, "models: unable to upsert for staffs")
 	}
 
 	var uniqueMap []uint64
@@ -1614,7 +1614,7 @@ func (o *Staff) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCol
 
 	uniqueMap, err = queries.BindMapping(staffType, staffMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to retrieve unique values for staff")
+		return errors.Wrap(err, "models: unable to retrieve unique values for staffs")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -1625,7 +1625,7 @@ func (o *Staff) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCol
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for staff")
+		return errors.Wrap(err, "models: unable to populate default values for staffs")
 	}
 
 CacheNoHooks:
@@ -1656,7 +1656,7 @@ func (o *Staff) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, e
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), staffPrimaryKeyMapping)
-	sql := "DELETE FROM `staff` WHERE `staff_id`=?"
+	sql := "DELETE FROM `staffs` WHERE `staff_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1665,12 +1665,12 @@ func (o *Staff) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, e
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from staff")
+		return 0, errors.Wrap(err, "models: unable to delete from staffs")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for staffs")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -1694,12 +1694,12 @@ func (q staffQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (i
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from staff")
+		return 0, errors.Wrap(err, "models: unable to delete all from staffs")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for staffs")
 	}
 
 	return rowsAff, nil
@@ -1730,7 +1730,7 @@ func (o StaffSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (i
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `staff` WHERE " +
+	sql := "DELETE FROM `staffs` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, staffPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -1745,7 +1745,7 @@ func (o StaffSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (i
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for staffs")
 	}
 
 	if len(staffAfterDeleteHooks) != 0 {
@@ -1804,7 +1804,7 @@ func (o *StaffSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) e
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `staff`.* FROM `staff` WHERE " +
+	sql := "SELECT `staffs`.* FROM `staffs` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, staffPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1827,7 +1827,7 @@ func StaffExistsG(ctx context.Context, staffID int) (bool, error) {
 // StaffExists checks if the Staff row exists.
 func StaffExists(ctx context.Context, exec boil.ContextExecutor, staffID int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `staff` where `staff_id`=? limit 1)"
+	sql := "select exists(select 1 from `staffs` where `staff_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1838,7 +1838,7 @@ func StaffExists(ctx context.Context, exec boil.ContextExecutor, staffID int) (b
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if staff exists")
+		return false, errors.Wrap(err, "models: unable to check if staffs exists")
 	}
 
 	return exists, nil

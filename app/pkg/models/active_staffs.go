@@ -25,7 +25,7 @@ import (
 // ActiveStaff is an object representing the database table.
 type ActiveStaff struct {
 	StaffID            int       `boil:"staff_id" json:"staff_id" toml:"staff_id" yaml:"staff_id"`
-	StoreID            null.Int  `boil:"store_id" json:"store_id,omitempty" toml:"store_id" yaml:"store_id,omitempty"`
+	StoreID            int       `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
 	BreakStartDatetime null.Time `boil:"break_start_datetime" json:"break_start_datetime,omitempty" toml:"break_start_datetime" yaml:"break_start_datetime,omitempty"`
 	BreakEndDatetime   null.Time `boil:"break_end_datetime" json:"break_end_datetime,omitempty" toml:"break_end_datetime" yaml:"break_end_datetime,omitempty"`
 
@@ -51,10 +51,10 @@ var ActiveStaffTableColumns = struct {
 	BreakStartDatetime string
 	BreakEndDatetime   string
 }{
-	StaffID:            "active_staff.staff_id",
-	StoreID:            "active_staff.store_id",
-	BreakStartDatetime: "active_staff.break_start_datetime",
-	BreakEndDatetime:   "active_staff.break_end_datetime",
+	StaffID:            "active_staffs.staff_id",
+	StoreID:            "active_staffs.store_id",
+	BreakStartDatetime: "active_staffs.break_start_datetime",
+	BreakEndDatetime:   "active_staffs.break_end_datetime",
 }
 
 // Generated where
@@ -82,44 +82,6 @@ func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelpernull_Int struct{ field string }
-
-func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
 type whereHelpernull_Time struct{ field string }
 
 func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
@@ -146,14 +108,14 @@ func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsN
 
 var ActiveStaffWhere = struct {
 	StaffID            whereHelperint
-	StoreID            whereHelpernull_Int
+	StoreID            whereHelperint
 	BreakStartDatetime whereHelpernull_Time
 	BreakEndDatetime   whereHelpernull_Time
 }{
-	StaffID:            whereHelperint{field: "`active_staff`.`staff_id`"},
-	StoreID:            whereHelpernull_Int{field: "`active_staff`.`store_id`"},
-	BreakStartDatetime: whereHelpernull_Time{field: "`active_staff`.`break_start_datetime`"},
-	BreakEndDatetime:   whereHelpernull_Time{field: "`active_staff`.`break_end_datetime`"},
+	StaffID:            whereHelperint{field: "`active_staffs`.`staff_id`"},
+	StoreID:            whereHelperint{field: "`active_staffs`.`store_id`"},
+	BreakStartDatetime: whereHelpernull_Time{field: "`active_staffs`.`break_start_datetime`"},
+	BreakEndDatetime:   whereHelpernull_Time{field: "`active_staffs`.`break_end_datetime`"},
 }
 
 // ActiveStaffRels is where relationship names are stored.
@@ -423,7 +385,7 @@ func (q activeStaffQuery) One(ctx context.Context, exec boil.ContextExecutor) (*
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for active_staff")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for active_staffs")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -472,7 +434,7 @@ func (q activeStaffQuery) Count(ctx context.Context, exec boil.ContextExecutor) 
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count active_staff rows")
+		return 0, errors.Wrap(err, "models: failed to count active_staffs rows")
 	}
 
 	return count, nil
@@ -493,7 +455,7 @@ func (q activeStaffQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if active_staff exists")
+		return false, errors.Wrap(err, "models: failed to check if active_staffs exists")
 	}
 
 	return count > 0, nil
@@ -579,8 +541,8 @@ func (activeStaffL) LoadStaff(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.From(`staff`),
-		qm.WhereIn(`staff.staff_id in ?`, args...),
+		qm.From(`staffs`),
+		qm.WhereIn(`staffs.staff_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -597,10 +559,10 @@ func (activeStaffL) LoadStaff(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for staff")
+		return errors.Wrap(err, "failed to close results of eager load for staffs")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for staff")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for staffs")
 	}
 
 	if len(staffAfterSelectHooks) != 0 {
@@ -674,9 +636,7 @@ func (activeStaffL) LoadStore(ctx context.Context, e boil.ContextExecutor, singu
 		if object.R == nil {
 			object.R = &activeStaffR{}
 		}
-		if !queries.IsNil(object.StoreID) {
-			args = append(args, object.StoreID)
-		}
+		args = append(args, object.StoreID)
 
 	} else {
 	Outer:
@@ -686,14 +646,12 @@ func (activeStaffL) LoadStore(ctx context.Context, e boil.ContextExecutor, singu
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.StoreID) {
+				if a == obj.StoreID {
 					continue Outer
 				}
 			}
 
-			if !queries.IsNil(obj.StoreID) {
-				args = append(args, obj.StoreID)
-			}
+			args = append(args, obj.StoreID)
 
 		}
 	}
@@ -751,7 +709,7 @@ func (activeStaffL) LoadStore(ctx context.Context, e boil.ContextExecutor, singu
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.StoreID, foreign.StoreID) {
+			if local.StoreID == foreign.StoreID {
 				local.R.Store = foreign
 				if foreign.R == nil {
 					foreign.R = &storeR{}
@@ -785,7 +743,7 @@ func (o *ActiveStaff) SetStaff(ctx context.Context, exec boil.ContextExecutor, i
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE `active_staff` SET %s WHERE %s",
+		"UPDATE `active_staffs` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, []string{"staff_id"}),
 		strmangle.WhereClause("`", "`", 0, activeStaffPrimaryKeyColumns),
 	)
@@ -840,7 +798,7 @@ func (o *ActiveStaff) SetStore(ctx context.Context, exec boil.ContextExecutor, i
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE `active_staff` SET %s WHERE %s",
+		"UPDATE `active_staffs` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, []string{"store_id"}),
 		strmangle.WhereClause("`", "`", 0, activeStaffPrimaryKeyColumns),
 	)
@@ -855,7 +813,7 @@ func (o *ActiveStaff) SetStore(ctx context.Context, exec boil.ContextExecutor, i
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.StoreID, related.StoreID)
+	o.StoreID = related.StoreID
 	if o.R == nil {
 		o.R = &activeStaffR{
 			Store: related,
@@ -875,53 +833,12 @@ func (o *ActiveStaff) SetStore(ctx context.Context, exec boil.ContextExecutor, i
 	return nil
 }
 
-// RemoveStoreG relationship.
-// Sets o.R.Store to nil.
-// Removes o from all passed in related items' relationships struct.
-// Uses the global database handle.
-func (o *ActiveStaff) RemoveStoreG(ctx context.Context, related *Store) error {
-	return o.RemoveStore(ctx, boil.GetContextDB(), related)
-}
-
-// RemoveStore relationship.
-// Sets o.R.Store to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *ActiveStaff) RemoveStore(ctx context.Context, exec boil.ContextExecutor, related *Store) error {
-	var err error
-
-	queries.SetScanner(&o.StoreID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("store_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.Store = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.ActiveStaffs {
-		if queries.Equal(o.StoreID, ri.StoreID) {
-			continue
-		}
-
-		ln := len(related.R.ActiveStaffs)
-		if ln > 1 && i < ln-1 {
-			related.R.ActiveStaffs[i] = related.R.ActiveStaffs[ln-1]
-		}
-		related.R.ActiveStaffs = related.R.ActiveStaffs[:ln-1]
-		break
-	}
-	return nil
-}
-
 // ActiveStaffs retrieves all the records using an executor.
 func ActiveStaffs(mods ...qm.QueryMod) activeStaffQuery {
-	mods = append(mods, qm.From("`active_staff`"))
+	mods = append(mods, qm.From("`active_staffs`"))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"`active_staff`.*"})
+		queries.SetSelect(q, []string{"`active_staffs`.*"})
 	}
 
 	return activeStaffQuery{q}
@@ -942,7 +859,7 @@ func FindActiveStaff(ctx context.Context, exec boil.ContextExecutor, staffID int
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `active_staff` where `staff_id`=?", sel,
+		"select %s from `active_staffs` where `staff_id`=?", sel,
 	)
 
 	q := queries.Raw(query, staffID)
@@ -952,7 +869,7 @@ func FindActiveStaff(ctx context.Context, exec boil.ContextExecutor, staffID int
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from active_staff")
+		return nil, errors.Wrap(err, "models: unable to select from active_staffs")
 	}
 
 	if err = activeStaffObj.doAfterSelectHooks(ctx, exec); err != nil {
@@ -971,7 +888,7 @@ func (o *ActiveStaff) InsertG(ctx context.Context, columns boil.Columns) error {
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *ActiveStaff) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no active_staff provided for insertion")
+		return errors.New("models: no active_staffs provided for insertion")
 	}
 
 	var err error
@@ -1004,15 +921,15 @@ func (o *ActiveStaff) Insert(ctx context.Context, exec boil.ContextExecutor, col
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `active_staff` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `active_staffs` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `active_staff` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `active_staffs` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `active_staff` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, activeStaffPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `active_staffs` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, activeStaffPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -1029,7 +946,7 @@ func (o *ActiveStaff) Insert(ctx context.Context, exec boil.ContextExecutor, col
 	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into active_staff")
+		return errors.Wrap(err, "models: unable to insert into active_staffs")
 	}
 
 	var identifierCols []interface{}
@@ -1049,7 +966,7 @@ func (o *ActiveStaff) Insert(ctx context.Context, exec boil.ContextExecutor, col
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for active_staff")
+		return errors.Wrap(err, "models: unable to populate default values for active_staffs")
 	}
 
 CacheNoHooks:
@@ -1091,10 +1008,10 @@ func (o *ActiveStaff) Update(ctx context.Context, exec boil.ContextExecutor, col
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update active_staff, could not build whitelist")
+			return 0, errors.New("models: unable to update active_staffs, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `active_staff` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `active_staffs` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, activeStaffPrimaryKeyColumns),
 		)
@@ -1114,12 +1031,12 @@ func (o *ActiveStaff) Update(ctx context.Context, exec boil.ContextExecutor, col
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update active_staff row")
+		return 0, errors.Wrap(err, "models: unable to update active_staffs row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for active_staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for active_staffs")
 	}
 
 	if !cached {
@@ -1142,12 +1059,12 @@ func (q activeStaffQuery) UpdateAll(ctx context.Context, exec boil.ContextExecut
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for active_staff")
+		return 0, errors.Wrap(err, "models: unable to update all for active_staffs")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for active_staff")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for active_staffs")
 	}
 
 	return rowsAff, nil
@@ -1185,7 +1102,7 @@ func (o ActiveStaffSlice) UpdateAll(ctx context.Context, exec boil.ContextExecut
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `active_staff` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `active_staffs` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, activeStaffPrimaryKeyColumns, len(o)))
 
@@ -1219,7 +1136,7 @@ var mySQLActiveStaffUniqueColumns = []string{
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *ActiveStaff) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no active_staff provided for upsert")
+		return errors.New("models: no active_staffs provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
@@ -1275,13 +1192,13 @@ func (o *ActiveStaff) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("models: unable to upsert active_staff, could not build update column list")
+			return errors.New("models: unable to upsert active_staffs, could not build update column list")
 		}
 
 		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`active_staff`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`active_staffs`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `active_staff` WHERE %s",
+			"SELECT %s FROM `active_staffs` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -1313,7 +1230,7 @@ func (o *ActiveStaff) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert for active_staff")
+		return errors.Wrap(err, "models: unable to upsert for active_staffs")
 	}
 
 	var uniqueMap []uint64
@@ -1325,7 +1242,7 @@ func (o *ActiveStaff) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 
 	uniqueMap, err = queries.BindMapping(activeStaffType, activeStaffMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to retrieve unique values for active_staff")
+		return errors.Wrap(err, "models: unable to retrieve unique values for active_staffs")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -1336,7 +1253,7 @@ func (o *ActiveStaff) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for active_staff")
+		return errors.Wrap(err, "models: unable to populate default values for active_staffs")
 	}
 
 CacheNoHooks:
@@ -1367,7 +1284,7 @@ func (o *ActiveStaff) Delete(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), activeStaffPrimaryKeyMapping)
-	sql := "DELETE FROM `active_staff` WHERE `staff_id`=?"
+	sql := "DELETE FROM `active_staffs` WHERE `staff_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1376,12 +1293,12 @@ func (o *ActiveStaff) Delete(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from active_staff")
+		return 0, errors.Wrap(err, "models: unable to delete from active_staffs")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for active_staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for active_staffs")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -1405,12 +1322,12 @@ func (q activeStaffQuery) DeleteAll(ctx context.Context, exec boil.ContextExecut
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from active_staff")
+		return 0, errors.Wrap(err, "models: unable to delete all from active_staffs")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for active_staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for active_staffs")
 	}
 
 	return rowsAff, nil
@@ -1441,7 +1358,7 @@ func (o ActiveStaffSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `active_staff` WHERE " +
+	sql := "DELETE FROM `active_staffs` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, activeStaffPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -1456,7 +1373,7 @@ func (o ActiveStaffSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for active_staff")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for active_staffs")
 	}
 
 	if len(activeStaffAfterDeleteHooks) != 0 {
@@ -1515,7 +1432,7 @@ func (o *ActiveStaffSlice) ReloadAll(ctx context.Context, exec boil.ContextExecu
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `active_staff`.* FROM `active_staff` WHERE " +
+	sql := "SELECT `active_staffs`.* FROM `active_staffs` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, activeStaffPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1538,7 +1455,7 @@ func ActiveStaffExistsG(ctx context.Context, staffID int) (bool, error) {
 // ActiveStaffExists checks if the ActiveStaff row exists.
 func ActiveStaffExists(ctx context.Context, exec boil.ContextExecutor, staffID int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `active_staff` where `staff_id`=? limit 1)"
+	sql := "select exists(select 1 from `active_staffs` where `staff_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1549,7 +1466,7 @@ func ActiveStaffExists(ctx context.Context, exec boil.ContextExecutor, staffID i
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if active_staff exists")
+		return false, errors.Wrap(err, "models: unable to check if active_staffs exists")
 	}
 
 	return exists, nil

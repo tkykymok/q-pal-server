@@ -3,17 +3,17 @@ package handlers
 import (
 	"app/api/requests"
 	"app/pkg/broadcast"
+	"app/pkg/core/usecase"
 	"context"
 	"encoding/json"
 	"log"
 
 	"app/api/presenter"
-	"app/pkg/todo"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 )
 
-func UpgradeTodoInputWsHandler(service todo.Usecase) func(c *fiber.Ctx) error {
+func UpgradeTodoInputWsHandler(service usecase.TodoUsecase) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return websocket.New(func(c *websocket.Conn) {
@@ -34,7 +34,7 @@ func UpgradeTodoInputWsHandler(service todo.Usecase) func(c *fiber.Ctx) error {
 	}
 }
 
-func handleTodoInputWsConnection(service todo.Usecase) func(*websocket.Conn) {
+func handleTodoInputWsConnection(service usecase.TodoUsecase) func(*websocket.Conn) {
 	return func(c *websocket.Conn) {
 		// Create cancellable context.
 		_, cancel := context.WithCancel(context.Background())

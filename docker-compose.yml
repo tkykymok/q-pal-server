@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/golang/Dockerfile
-    container_name: go_q_mate_container
+    container_name: q_pal_app
     ports:
       - "8080:8080"
       - "2345:2345"
@@ -15,12 +15,12 @@ services:
     build:
       context: .
       dockerfile: ./docker/mysql/Dockerfile
-    container_name: mysql_q_mate_container
+    container_name: q_pal_db
     environment:
-      MYSQL_USER: qmate
+      MYSQL_USER: qpal
       MYSQL_PASSWORD: pass
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: q_mate_db
+      MYSQL_DATABASE: q_pal_db
     volumes:
       - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d
       - ./docker/mysql/conf.d:/etc/mysql/conf.d

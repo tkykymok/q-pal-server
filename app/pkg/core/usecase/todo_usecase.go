@@ -1,15 +1,16 @@
-package todo
+package usecase
 
 import (
 	"app/api/presenter"
 	"app/api/requests"
 	"app/pkg/broadcast"
+	"app/pkg/core/repository"
 	"app/pkg/models"
 	"app/pkg/outputs"
 	"context"
 )
 
-type Usecase interface {
+type TodoUsecase interface {
 	FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error)
 	FetchTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]outputs.TodoWithRelated, error)
 	FetchTodoById(ctx context.Context, id int) (*outputs.Todo, error)
@@ -19,17 +20,17 @@ type Usecase interface {
 	BroadcastNewTodo(todo *models.Todo) error
 }
 
-type usecase struct {
-	repository Repository
+type todoUsecase struct {
+	repository repository.TodoRepository
 }
 
-func NewUsecase(r Repository) Usecase {
-	return &usecase{
+func NewTodoUsecase(r repository.TodoRepository) TodoUsecase {
+	return &todoUsecase{
 		repository: r,
 	}
 }
 
-func (u usecase) FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error) {
+func (u todoUsecase) FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error) {
 	todos := make([]outputs.Todo, 0)
 	result, err := u.repository.ReadAllTodos(ctx)
 	if err != nil {
@@ -49,7 +50,7 @@ func (u usecase) FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error) {
 	return &todos, nil
 }
 
-func (u usecase) FetchTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]outputs.TodoWithRelated, error) {
+func (u todoUsecase) FetchTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]outputs.TodoWithRelated, error) {
 	todos := make([]outputs.TodoWithRelated, 0)
 	result, err := u.repository.ReadTodosWithRelated(ctx, request)
 	if err != nil {
@@ -70,7 +71,7 @@ func (u usecase) FetchTodosWithRelated(ctx context.Context, request *requests.Ge
 	return &todos, nil
 }
 
-func (u usecase) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, error) {
+func (u todoUsecase) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, error) {
 	result, err := u.repository.ReadTodoById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -86,7 +87,7 @@ func (u usecase) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, erro
 	return &todo, nil
 }
 
-func (u usecase) InsertTodo(ctx context.Context, todo *requests.AddTodo) error {
+func (u todoUsecase) InsertTodo(ctx context.Context, todo *requests.AddTodo) error {
 	cTodo := models.Todo{
 		Title: todo.Title,
 	}
@@ -103,7 +104,7 @@ func (u usecase) InsertTodo(ctx context.Context, todo *requests.AddTodo) error {
 	return nil
 }
 
-func (u usecase) UpdateTodo(ctx context.Context, todo *requests.UpdateTodo) error {
+func (u todoUsecase) UpdateTodo(ctx context.Context, todo *requests.UpdateTodo) error {
 	uTodo := models.Todo{
 		ID:        todo.ID,
 		Title:     todo.Title,
@@ -112,7 +113,7 @@ func (u usecase) UpdateTodo(ctx context.Context, todo *requests.UpdateTodo) erro
 	return u.repository.UpdateTodo(ctx, &uTodo)
 }
 
-func (u usecase) BroadcastNewTodo(todo *models.Todo) error {
+func (u todoUsecase) BroadcastNewTodo(todo *models.Todo) error {
 	// Convert the Todo model to presenter.Todo
 	pTodo := presenter.Todo{
 		ID:        todo.ID,

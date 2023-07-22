@@ -24,6 +24,7 @@ import (
 // ReservationMenu is an object representing the database table.
 type ReservationMenu struct {
 	ReservationID int `boil:"reservation_id" json:"reservation_id" toml:"reservation_id" yaml:"reservation_id"`
+	StoreID       int `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
 	MenuID        int `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
 
 	R *reservationMenuR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -32,17 +33,21 @@ type ReservationMenu struct {
 
 var ReservationMenuColumns = struct {
 	ReservationID string
+	StoreID       string
 	MenuID        string
 }{
 	ReservationID: "reservation_id",
+	StoreID:       "store_id",
 	MenuID:        "menu_id",
 }
 
 var ReservationMenuTableColumns = struct {
 	ReservationID string
+	StoreID       string
 	MenuID        string
 }{
 	ReservationID: "reservation_menus.reservation_id",
+	StoreID:       "reservation_menus.store_id",
 	MenuID:        "reservation_menus.menu_id",
 }
 
@@ -50,27 +55,39 @@ var ReservationMenuTableColumns = struct {
 
 var ReservationMenuWhere = struct {
 	ReservationID whereHelperint
+	StoreID       whereHelperint
 	MenuID        whereHelperint
 }{
 	ReservationID: whereHelperint{field: "`reservation_menus`.`reservation_id`"},
+	StoreID:       whereHelperint{field: "`reservation_menus`.`store_id`"},
 	MenuID:        whereHelperint{field: "`reservation_menus`.`menu_id`"},
 }
 
 // ReservationMenuRels is where relationship names are stored.
 var ReservationMenuRels = struct {
+	Store       string
 	Reservation string
 }{
+	Store:       "Store",
 	Reservation: "Reservation",
 }
 
 // reservationMenuR is where relationships are stored.
 type reservationMenuR struct {
+	Store       *Store       `boil:"Store" json:"Store" toml:"Store" yaml:"Store"`
 	Reservation *Reservation `boil:"Reservation" json:"Reservation" toml:"Reservation" yaml:"Reservation"`
 }
 
 // NewStruct creates a new relationship struct
 func (*reservationMenuR) NewStruct() *reservationMenuR {
 	return &reservationMenuR{}
+}
+
+func (r *reservationMenuR) GetStore() *Store {
+	if r == nil {
+		return nil
+	}
+	return r.Store
 }
 
 func (r *reservationMenuR) GetReservation() *Reservation {
@@ -84,10 +101,10 @@ func (r *reservationMenuR) GetReservation() *Reservation {
 type reservationMenuL struct{}
 
 var (
-	reservationMenuAllColumns            = []string{"reservation_id", "menu_id"}
-	reservationMenuColumnsWithoutDefault = []string{"reservation_id", "menu_id"}
+	reservationMenuAllColumns            = []string{"reservation_id", "store_id", "menu_id"}
+	reservationMenuColumnsWithoutDefault = []string{"reservation_id", "store_id", "menu_id"}
 	reservationMenuColumnsWithDefault    = []string{}
-	reservationMenuPrimaryKeyColumns     = []string{"reservation_id", "menu_id"}
+	reservationMenuPrimaryKeyColumns     = []string{"reservation_id", "store_id", "menu_id"}
 	reservationMenuGeneratedColumns      = []string{}
 )
 
@@ -389,6 +406,17 @@ func (q reservationMenuQuery) Exists(ctx context.Context, exec boil.ContextExecu
 	return count > 0, nil
 }
 
+// Store pointed to by the foreign key.
+func (o *ReservationMenu) Store(mods ...qm.QueryMod) storeQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`store_id` = ?", o.StoreID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Stores(queryMods...)
+}
+
 // Reservation pointed to by the foreign key.
 func (o *ReservationMenu) Reservation(mods ...qm.QueryMod) reservationQuery {
 	queryMods := []qm.QueryMod{
@@ -398,6 +426,126 @@ func (o *ReservationMenu) Reservation(mods ...qm.QueryMod) reservationQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Reservations(queryMods...)
+}
+
+// LoadStore allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (reservationMenuL) LoadStore(ctx context.Context, e boil.ContextExecutor, singular bool, maybeReservationMenu interface{}, mods queries.Applicator) error {
+	var slice []*ReservationMenu
+	var object *ReservationMenu
+
+	if singular {
+		var ok bool
+		object, ok = maybeReservationMenu.(*ReservationMenu)
+		if !ok {
+			object = new(ReservationMenu)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeReservationMenu)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeReservationMenu))
+			}
+		}
+	} else {
+		s, ok := maybeReservationMenu.(*[]*ReservationMenu)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeReservationMenu)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeReservationMenu))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &reservationMenuR{}
+		}
+		args = append(args, object.StoreID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &reservationMenuR{}
+			}
+
+			for _, a := range args {
+				if a == obj.StoreID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.StoreID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`stores`),
+		qm.WhereIn(`stores.store_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Store")
+	}
+
+	var resultSlice []*Store
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Store")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for stores")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stores")
+	}
+
+	if len(storeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Store = foreign
+		if foreign.R == nil {
+			foreign.R = &storeR{}
+		}
+		foreign.R.ReservationMenus = append(foreign.R.ReservationMenus, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.StoreID == foreign.StoreID {
+				local.R.Store = foreign
+				if foreign.R == nil {
+					foreign.R = &storeR{}
+				}
+				foreign.R.ReservationMenus = append(foreign.R.ReservationMenus, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadReservation allows an eager lookup of values, cached into the
@@ -520,6 +668,61 @@ func (reservationMenuL) LoadReservation(ctx context.Context, e boil.ContextExecu
 	return nil
 }
 
+// SetStoreG of the reservationMenu to the related item.
+// Sets o.R.Store to related.
+// Adds o to related.R.ReservationMenus.
+// Uses the global database handle.
+func (o *ReservationMenu) SetStoreG(ctx context.Context, insert bool, related *Store) error {
+	return o.SetStore(ctx, boil.GetContextDB(), insert, related)
+}
+
+// SetStore of the reservationMenu to the related item.
+// Sets o.R.Store to related.
+// Adds o to related.R.ReservationMenus.
+func (o *ReservationMenu) SetStore(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Store) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `reservation_menus` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"store_id"}),
+		strmangle.WhereClause("`", "`", 0, reservationMenuPrimaryKeyColumns),
+	)
+	values := []interface{}{related.StoreID, o.ReservationID, o.StoreID, o.MenuID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.StoreID = related.StoreID
+	if o.R == nil {
+		o.R = &reservationMenuR{
+			Store: related,
+		}
+	} else {
+		o.R.Store = related
+	}
+
+	if related.R == nil {
+		related.R = &storeR{
+			ReservationMenus: ReservationMenuSlice{o},
+		}
+	} else {
+		related.R.ReservationMenus = append(related.R.ReservationMenus, o)
+	}
+
+	return nil
+}
+
 // SetReservationG of the reservationMenu to the related item.
 // Sets o.R.Reservation to related.
 // Adds o to related.R.ReservationMenus.
@@ -544,7 +747,7 @@ func (o *ReservationMenu) SetReservation(ctx context.Context, exec boil.ContextE
 		strmangle.SetParamNames("`", "`", 0, []string{"reservation_id"}),
 		strmangle.WhereClause("`", "`", 0, reservationMenuPrimaryKeyColumns),
 	)
-	values := []interface{}{related.ReservationID, o.ReservationID, o.MenuID}
+	values := []interface{}{related.ReservationID, o.ReservationID, o.StoreID, o.MenuID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -587,13 +790,13 @@ func ReservationMenus(mods ...qm.QueryMod) reservationMenuQuery {
 }
 
 // FindReservationMenuG retrieves a single record by ID.
-func FindReservationMenuG(ctx context.Context, reservationID int, menuID int, selectCols ...string) (*ReservationMenu, error) {
-	return FindReservationMenu(ctx, boil.GetContextDB(), reservationID, menuID, selectCols...)
+func FindReservationMenuG(ctx context.Context, reservationID int, storeID int, menuID int, selectCols ...string) (*ReservationMenu, error) {
+	return FindReservationMenu(ctx, boil.GetContextDB(), reservationID, storeID, menuID, selectCols...)
 }
 
 // FindReservationMenu retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindReservationMenu(ctx context.Context, exec boil.ContextExecutor, reservationID int, menuID int, selectCols ...string) (*ReservationMenu, error) {
+func FindReservationMenu(ctx context.Context, exec boil.ContextExecutor, reservationID int, storeID int, menuID int, selectCols ...string) (*ReservationMenu, error) {
 	reservationMenuObj := &ReservationMenu{}
 
 	sel := "*"
@@ -601,10 +804,10 @@ func FindReservationMenu(ctx context.Context, exec boil.ContextExecutor, reserva
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `reservation_menus` where `reservation_id`=? AND `menu_id`=?", sel,
+		"select %s from `reservation_menus` where `reservation_id`=? AND `store_id`=? AND `menu_id`=?", sel,
 	)
 
-	q := queries.Raw(query, reservationID, menuID)
+	q := queries.Raw(query, reservationID, storeID, menuID)
 
 	err := q.Bind(ctx, exec, reservationMenuObj)
 	if err != nil {
@@ -699,6 +902,7 @@ func (o *ReservationMenu) Insert(ctx context.Context, exec boil.ContextExecutor,
 
 	identifierCols = []interface{}{
 		o.ReservationID,
+		o.StoreID,
 		o.MenuID,
 	}
 
@@ -1025,7 +1229,7 @@ func (o *ReservationMenu) Delete(ctx context.Context, exec boil.ContextExecutor)
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), reservationMenuPrimaryKeyMapping)
-	sql := "DELETE FROM `reservation_menus` WHERE `reservation_id`=? AND `menu_id`=?"
+	sql := "DELETE FROM `reservation_menus` WHERE `reservation_id`=? AND `store_id`=? AND `menu_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1140,7 +1344,7 @@ func (o *ReservationMenu) ReloadG(ctx context.Context) error {
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *ReservationMenu) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindReservationMenu(ctx, exec, o.ReservationID, o.MenuID)
+	ret, err := FindReservationMenu(ctx, exec, o.ReservationID, o.StoreID, o.MenuID)
 	if err != nil {
 		return err
 	}
@@ -1189,21 +1393,21 @@ func (o *ReservationMenuSlice) ReloadAll(ctx context.Context, exec boil.ContextE
 }
 
 // ReservationMenuExistsG checks if the ReservationMenu row exists.
-func ReservationMenuExistsG(ctx context.Context, reservationID int, menuID int) (bool, error) {
-	return ReservationMenuExists(ctx, boil.GetContextDB(), reservationID, menuID)
+func ReservationMenuExistsG(ctx context.Context, reservationID int, storeID int, menuID int) (bool, error) {
+	return ReservationMenuExists(ctx, boil.GetContextDB(), reservationID, storeID, menuID)
 }
 
 // ReservationMenuExists checks if the ReservationMenu row exists.
-func ReservationMenuExists(ctx context.Context, exec boil.ContextExecutor, reservationID int, menuID int) (bool, error) {
+func ReservationMenuExists(ctx context.Context, exec boil.ContextExecutor, reservationID int, storeID int, menuID int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `reservation_menus` where `reservation_id`=? AND `menu_id`=? limit 1)"
+	sql := "select exists(select 1 from `reservation_menus` where `reservation_id`=? AND `store_id`=? AND `menu_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, reservationID, menuID)
+		fmt.Fprintln(writer, reservationID, storeID, menuID)
 	}
-	row := exec.QueryRowContext(ctx, sql, reservationID, menuID)
+	row := exec.QueryRowContext(ctx, sql, reservationID, storeID, menuID)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1215,5 +1419,5 @@ func ReservationMenuExists(ctx context.Context, exec boil.ContextExecutor, reser
 
 // Exists checks if the ReservationMenu row exists.
 func (o *ReservationMenu) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return ReservationMenuExists(ctx, exec, o.ReservationID, o.MenuID)
+	return ReservationMenuExists(ctx, exec, o.ReservationID, o.StoreID, o.MenuID)
 }

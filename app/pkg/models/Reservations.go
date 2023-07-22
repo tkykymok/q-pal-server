@@ -33,9 +33,8 @@ type Reservation struct {
 	HoldStartDatetime    null.Time `boil:"hold_start_datetime" json:"hold_start_datetime,omitempty" toml:"hold_start_datetime" yaml:"hold_start_datetime,omitempty"`
 	ServiceStartDatetime null.Time `boil:"service_start_datetime" json:"service_start_datetime,omitempty" toml:"service_start_datetime" yaml:"service_start_datetime,omitempty"`
 	ServiceEndDatetime   null.Time `boil:"service_end_datetime" json:"service_end_datetime,omitempty" toml:"service_end_datetime" yaml:"service_end_datetime,omitempty"`
-	Status               null.Int  `boil:"status" json:"status,omitempty" toml:"status" yaml:"status,omitempty"`
+	Status               int       `boil:"status" json:"status" toml:"status" yaml:"status"`
 	ArrivalFlag          bool      `boil:"arrival_flag" json:"arrival_flag" toml:"arrival_flag" yaml:"arrival_flag"`
-	CancelFlag           bool      `boil:"cancel_flag" json:"cancel_flag" toml:"cancel_flag" yaml:"cancel_flag"`
 	CancelType           null.Int  `boil:"cancel_type" json:"cancel_type,omitempty" toml:"cancel_type" yaml:"cancel_type,omitempty"`
 
 	R *reservationR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -54,7 +53,6 @@ var ReservationColumns = struct {
 	ServiceEndDatetime   string
 	Status               string
 	ArrivalFlag          string
-	CancelFlag           string
 	CancelType           string
 }{
 	ReservationID:        "reservation_id",
@@ -68,7 +66,6 @@ var ReservationColumns = struct {
 	ServiceEndDatetime:   "service_end_datetime",
 	Status:               "status",
 	ArrivalFlag:          "arrival_flag",
-	CancelFlag:           "cancel_flag",
 	CancelType:           "cancel_type",
 }
 
@@ -84,7 +81,6 @@ var ReservationTableColumns = struct {
 	ServiceEndDatetime   string
 	Status               string
 	ArrivalFlag          string
-	CancelFlag           string
 	CancelType           string
 }{
 	ReservationID:        "reservations.reservation_id",
@@ -98,7 +94,6 @@ var ReservationTableColumns = struct {
 	ServiceEndDatetime:   "reservations.service_end_datetime",
 	Status:               "reservations.status",
 	ArrivalFlag:          "reservations.arrival_flag",
-	CancelFlag:           "reservations.cancel_flag",
 	CancelType:           "reservations.cancel_type",
 }
 
@@ -144,9 +139,8 @@ var ReservationWhere = struct {
 	HoldStartDatetime    whereHelpernull_Time
 	ServiceStartDatetime whereHelpernull_Time
 	ServiceEndDatetime   whereHelpernull_Time
-	Status               whereHelpernull_Int
+	Status               whereHelperint
 	ArrivalFlag          whereHelperbool
-	CancelFlag           whereHelperbool
 	CancelType           whereHelpernull_Int
 }{
 	ReservationID:        whereHelperint{field: "`reservations`.`reservation_id`"},
@@ -158,9 +152,8 @@ var ReservationWhere = struct {
 	HoldStartDatetime:    whereHelpernull_Time{field: "`reservations`.`hold_start_datetime`"},
 	ServiceStartDatetime: whereHelpernull_Time{field: "`reservations`.`service_start_datetime`"},
 	ServiceEndDatetime:   whereHelpernull_Time{field: "`reservations`.`service_end_datetime`"},
-	Status:               whereHelpernull_Int{field: "`reservations`.`status`"},
+	Status:               whereHelperint{field: "`reservations`.`status`"},
 	ArrivalFlag:          whereHelperbool{field: "`reservations`.`arrival_flag`"},
-	CancelFlag:           whereHelperbool{field: "`reservations`.`cancel_flag`"},
 	CancelType:           whereHelpernull_Int{field: "`reservations`.`cancel_type`"},
 }
 
@@ -242,9 +235,9 @@ func (r *reservationR) GetVisitHistories() VisitHistorySlice {
 type reservationL struct{}
 
 var (
-	reservationAllColumns            = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "status", "arrival_flag", "cancel_flag", "cancel_type"}
-	reservationColumnsWithoutDefault = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "status", "cancel_type"}
-	reservationColumnsWithDefault    = []string{"arrival_flag", "cancel_flag"}
+	reservationAllColumns            = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "status", "arrival_flag", "cancel_type"}
+	reservationColumnsWithoutDefault = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "cancel_type"}
+	reservationColumnsWithDefault    = []string{"status", "arrival_flag"}
 	reservationPrimaryKeyColumns     = []string{"reservation_id"}
 	reservationGeneratedColumns      = []string{}
 )
@@ -924,8 +917,8 @@ func (reservationL) LoadStaff(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	query := NewQuery(
-		qm.From(`staff`),
-		qm.WhereIn(`staff.staff_id in ?`, args...),
+		qm.From(`staffs`),
+		qm.WhereIn(`staffs.staff_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -942,10 +935,10 @@ func (reservationL) LoadStaff(ctx context.Context, e boil.ContextExecutor, singu
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for staff")
+		return errors.Wrap(err, "failed to close results of eager load for staffs")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for staff")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for staffs")
 	}
 
 	if len(staffAfterSelectHooks) != 0 {
@@ -1716,7 +1709,7 @@ func (o *Reservation) AddReservationMenus(ctx context.Context, exec boil.Context
 				strmangle.SetParamNames("`", "`", 0, []string{"reservation_id"}),
 				strmangle.WhereClause("`", "`", 0, reservationMenuPrimaryKeyColumns),
 			)
-			values := []interface{}{o.ReservationID, rel.ReservationID, rel.MenuID}
+			values := []interface{}{o.ReservationID, rel.ReservationID, rel.StoreID, rel.MenuID}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)

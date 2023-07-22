@@ -1,5 +1,5 @@
 package requests
 
-type GetReservationsByStoreId struct {
+type GetReservations struct {
 	StoreId int
 }

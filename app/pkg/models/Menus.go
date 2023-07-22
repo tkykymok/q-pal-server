@@ -25,39 +25,39 @@ import (
 
 // Menu is an object representing the database table.
 type Menu struct {
+	StoreID  int               `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
 	MenuID   int               `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
-	StoreID  null.Int          `boil:"store_id" json:"store_id,omitempty" toml:"store_id" yaml:"store_id,omitempty"`
 	MenuName null.String       `boil:"menu_name" json:"menu_name,omitempty" toml:"menu_name" yaml:"menu_name,omitempty"`
 	Price    types.NullDecimal `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
-	Time     null.Int          `boil:"time" json:"time,omitempty" toml:"time" yaml:"time,omitempty"`
+	Time     int               `boil:"time" json:"time" toml:"time" yaml:"time"`
 
 	R *menuR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L menuL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MenuColumns = struct {
-	MenuID   string
 	StoreID  string
+	MenuID   string
 	MenuName string
 	Price    string
 	Time     string
 }{
-	MenuID:   "menu_id",
 	StoreID:  "store_id",
+	MenuID:   "menu_id",
 	MenuName: "menu_name",
 	Price:    "price",
 	Time:     "time",
 }
 
 var MenuTableColumns = struct {
-	MenuID   string
 	StoreID  string
+	MenuID   string
 	MenuName string
 	Price    string
 	Time     string
 }{
-	MenuID:   "menus.menu_id",
 	StoreID:  "menus.store_id",
+	MenuID:   "menus.menu_id",
 	MenuName: "menus.menu_name",
 	Price:    "menus.price",
 	Time:     "menus.time",
@@ -66,32 +66,29 @@ var MenuTableColumns = struct {
 // Generated where
 
 var MenuWhere = struct {
+	StoreID  whereHelperint
 	MenuID   whereHelperint
-	StoreID  whereHelpernull_Int
 	MenuName whereHelpernull_String
 	Price    whereHelpertypes_NullDecimal
-	Time     whereHelpernull_Int
+	Time     whereHelperint
 }{
+	StoreID:  whereHelperint{field: "`menus`.`store_id`"},
 	MenuID:   whereHelperint{field: "`menus`.`menu_id`"},
-	StoreID:  whereHelpernull_Int{field: "`menus`.`store_id`"},
 	MenuName: whereHelpernull_String{field: "`menus`.`menu_name`"},
 	Price:    whereHelpertypes_NullDecimal{field: "`menus`.`price`"},
-	Time:     whereHelpernull_Int{field: "`menus`.`time`"},
+	Time:     whereHelperint{field: "`menus`.`time`"},
 }
 
 // MenuRels is where relationship names are stored.
 var MenuRels = struct {
-	Store       string
-	SetMenuSets string
+	Store string
 }{
-	Store:       "Store",
-	SetMenuSets: "SetMenuSets",
+	Store: "Store",
 }
 
 // menuR is where relationships are stored.
 type menuR struct {
-	Store       *Store       `boil:"Store" json:"Store" toml:"Store" yaml:"Store"`
-	SetMenuSets MenuSetSlice `boil:"SetMenuSets" json:"SetMenuSets" toml:"SetMenuSets" yaml:"SetMenuSets"`
+	Store *Store `boil:"Store" json:"Store" toml:"Store" yaml:"Store"`
 }
 
 // NewStruct creates a new relationship struct
@@ -106,21 +103,14 @@ func (r *menuR) GetStore() *Store {
 	return r.Store
 }
 
-func (r *menuR) GetSetMenuSets() MenuSetSlice {
-	if r == nil {
-		return nil
-	}
-	return r.SetMenuSets
-}
-
 // menuL is where Load methods for each relationship are stored.
 type menuL struct{}
 
 var (
-	menuAllColumns            = []string{"menu_id", "store_id", "menu_name", "price", "time"}
-	menuColumnsWithoutDefault = []string{"menu_id", "store_id", "menu_name", "price", "time"}
-	menuColumnsWithDefault    = []string{}
-	menuPrimaryKeyColumns     = []string{"menu_id"}
+	menuAllColumns            = []string{"store_id", "menu_id", "menu_name", "price", "time"}
+	menuColumnsWithoutDefault = []string{"store_id", "menu_id", "menu_name", "price"}
+	menuColumnsWithDefault    = []string{"time"}
+	menuPrimaryKeyColumns     = []string{"store_id", "menu_id"}
 	menuGeneratedColumns      = []string{}
 )
 
@@ -433,21 +423,6 @@ func (o *Menu) Store(mods ...qm.QueryMod) storeQuery {
 	return Stores(queryMods...)
 }
 
-// SetMenuSets retrieves all the menu_set's MenuSets with an executor via set_id column.
-func (o *Menu) SetMenuSets(mods ...qm.QueryMod) menuSetQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.InnerJoin("`menu_set_details` on `menu_sets`.`set_id` = `menu_set_details`.`set_id`"),
-		qm.Where("`menu_set_details`.`menu_id`=?", o.MenuID),
-	)
-
-	return MenuSets(queryMods...)
-}
-
 // LoadStore allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (menuL) LoadStore(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMenu interface{}, mods queries.Applicator) error {
@@ -481,9 +456,7 @@ func (menuL) LoadStore(ctx context.Context, e boil.ContextExecutor, singular boo
 		if object.R == nil {
 			object.R = &menuR{}
 		}
-		if !queries.IsNil(object.StoreID) {
-			args = append(args, object.StoreID)
-		}
+		args = append(args, object.StoreID)
 
 	} else {
 	Outer:
@@ -493,14 +466,12 @@ func (menuL) LoadStore(ctx context.Context, e boil.ContextExecutor, singular boo
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.StoreID) {
+				if a == obj.StoreID {
 					continue Outer
 				}
 			}
 
-			if !queries.IsNil(obj.StoreID) {
-				args = append(args, obj.StoreID)
-			}
+			args = append(args, obj.StoreID)
 
 		}
 	}
@@ -558,141 +529,10 @@ func (menuL) LoadStore(ctx context.Context, e boil.ContextExecutor, singular boo
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.StoreID, foreign.StoreID) {
+			if local.StoreID == foreign.StoreID {
 				local.R.Store = foreign
 				if foreign.R == nil {
 					foreign.R = &storeR{}
-				}
-				foreign.R.Menus = append(foreign.R.Menus, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadSetMenuSets allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (menuL) LoadSetMenuSets(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMenu interface{}, mods queries.Applicator) error {
-	var slice []*Menu
-	var object *Menu
-
-	if singular {
-		var ok bool
-		object, ok = maybeMenu.(*Menu)
-		if !ok {
-			object = new(Menu)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeMenu)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeMenu))
-			}
-		}
-	} else {
-		s, ok := maybeMenu.(*[]*Menu)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeMenu)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeMenu))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &menuR{}
-		}
-		args = append(args, object.MenuID)
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &menuR{}
-			}
-
-			for _, a := range args {
-				if a == obj.MenuID {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.MenuID)
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.Select("`menu_sets`.`set_id`, `menu_sets`.`set_name`, `menu_sets`.`set_price`, `a`.`menu_id`"),
-		qm.From("`menu_sets`"),
-		qm.InnerJoin("`menu_set_details` as `a` on `menu_sets`.`set_id` = `a`.`set_id`"),
-		qm.WhereIn("`a`.`menu_id` in ?", args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load menu_sets")
-	}
-
-	var resultSlice []*MenuSet
-
-	var localJoinCols []int
-	for results.Next() {
-		one := new(MenuSet)
-		var localJoinCol int
-
-		err = results.Scan(&one.SetID, &one.SetName, &one.SetPrice, &localJoinCol)
-		if err != nil {
-			return errors.Wrap(err, "failed to scan eager loaded results for menu_sets")
-		}
-		if err = results.Err(); err != nil {
-			return errors.Wrap(err, "failed to plebian-bind eager loaded slice menu_sets")
-		}
-
-		resultSlice = append(resultSlice, one)
-		localJoinCols = append(localJoinCols, localJoinCol)
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on menu_sets")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for menu_sets")
-	}
-
-	if len(menuSetAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.SetMenuSets = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &menuSetR{}
-			}
-			foreign.R.Menus = append(foreign.R.Menus, object)
-		}
-		return nil
-	}
-
-	for i, foreign := range resultSlice {
-		localJoinCol := localJoinCols[i]
-		for _, local := range slice {
-			if local.MenuID == localJoinCol {
-				local.R.SetMenuSets = append(local.R.SetMenuSets, foreign)
-				if foreign.R == nil {
-					foreign.R = &menuSetR{}
 				}
 				foreign.R.Menus = append(foreign.R.Menus, local)
 				break
@@ -727,7 +567,7 @@ func (o *Menu) SetStore(ctx context.Context, exec boil.ContextExecutor, insert b
 		strmangle.SetParamNames("`", "`", 0, []string{"store_id"}),
 		strmangle.WhereClause("`", "`", 0, menuPrimaryKeyColumns),
 	)
-	values := []interface{}{related.StoreID, o.MenuID}
+	values := []interface{}{related.StoreID, o.StoreID, o.MenuID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -738,7 +578,7 @@ func (o *Menu) SetStore(ctx context.Context, exec boil.ContextExecutor, insert b
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.StoreID, related.StoreID)
+	o.StoreID = related.StoreID
 	if o.R == nil {
 		o.R = &menuR{
 			Store: related,
@@ -758,220 +598,6 @@ func (o *Menu) SetStore(ctx context.Context, exec boil.ContextExecutor, insert b
 	return nil
 }
 
-// RemoveStoreG relationship.
-// Sets o.R.Store to nil.
-// Removes o from all passed in related items' relationships struct.
-// Uses the global database handle.
-func (o *Menu) RemoveStoreG(ctx context.Context, related *Store) error {
-	return o.RemoveStore(ctx, boil.GetContextDB(), related)
-}
-
-// RemoveStore relationship.
-// Sets o.R.Store to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *Menu) RemoveStore(ctx context.Context, exec boil.ContextExecutor, related *Store) error {
-	var err error
-
-	queries.SetScanner(&o.StoreID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("store_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.Store = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.Menus {
-		if queries.Equal(o.StoreID, ri.StoreID) {
-			continue
-		}
-
-		ln := len(related.R.Menus)
-		if ln > 1 && i < ln-1 {
-			related.R.Menus[i] = related.R.Menus[ln-1]
-		}
-		related.R.Menus = related.R.Menus[:ln-1]
-		break
-	}
-	return nil
-}
-
-// AddSetMenuSetsG adds the given related objects to the existing relationships
-// of the menu, optionally inserting them as new records.
-// Appends related to o.R.SetMenuSets.
-// Sets related.R.Menus appropriately.
-// Uses the global database handle.
-func (o *Menu) AddSetMenuSetsG(ctx context.Context, insert bool, related ...*MenuSet) error {
-	return o.AddSetMenuSets(ctx, boil.GetContextDB(), insert, related...)
-}
-
-// AddSetMenuSets adds the given related objects to the existing relationships
-// of the menu, optionally inserting them as new records.
-// Appends related to o.R.SetMenuSets.
-// Sets related.R.Menus appropriately.
-func (o *Menu) AddSetMenuSets(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*MenuSet) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		}
-	}
-
-	for _, rel := range related {
-		query := "insert into `menu_set_details` (`menu_id`, `set_id`) values (?, ?)"
-		values := []interface{}{o.MenuID, rel.SetID}
-
-		if boil.IsDebug(ctx) {
-			writer := boil.DebugWriterFrom(ctx)
-			fmt.Fprintln(writer, query)
-			fmt.Fprintln(writer, values)
-		}
-		_, err = exec.ExecContext(ctx, query, values...)
-		if err != nil {
-			return errors.Wrap(err, "failed to insert into join table")
-		}
-	}
-	if o.R == nil {
-		o.R = &menuR{
-			SetMenuSets: related,
-		}
-	} else {
-		o.R.SetMenuSets = append(o.R.SetMenuSets, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &menuSetR{
-				Menus: MenuSlice{o},
-			}
-		} else {
-			rel.R.Menus = append(rel.R.Menus, o)
-		}
-	}
-	return nil
-}
-
-// SetSetMenuSetsG removes all previously related items of the
-// menu replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Menus's SetMenuSets accordingly.
-// Replaces o.R.SetMenuSets with related.
-// Sets related.R.Menus's SetMenuSets accordingly.
-// Uses the global database handle.
-func (o *Menu) SetSetMenuSetsG(ctx context.Context, insert bool, related ...*MenuSet) error {
-	return o.SetSetMenuSets(ctx, boil.GetContextDB(), insert, related...)
-}
-
-// SetSetMenuSets removes all previously related items of the
-// menu replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Menus's SetMenuSets accordingly.
-// Replaces o.R.SetMenuSets with related.
-// Sets related.R.Menus's SetMenuSets accordingly.
-func (o *Menu) SetSetMenuSets(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*MenuSet) error {
-	query := "delete from `menu_set_details` where `menu_id` = ?"
-	values := []interface{}{o.MenuID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	removeSetMenuSetsFromMenusSlice(o, related)
-	if o.R != nil {
-		o.R.SetMenuSets = nil
-	}
-
-	return o.AddSetMenuSets(ctx, exec, insert, related...)
-}
-
-// RemoveSetMenuSetsG relationships from objects passed in.
-// Removes related items from R.SetMenuSets (uses pointer comparison, removal does not keep order)
-// Sets related.R.Menus.
-// Uses the global database handle.
-func (o *Menu) RemoveSetMenuSetsG(ctx context.Context, related ...*MenuSet) error {
-	return o.RemoveSetMenuSets(ctx, boil.GetContextDB(), related...)
-}
-
-// RemoveSetMenuSets relationships from objects passed in.
-// Removes related items from R.SetMenuSets (uses pointer comparison, removal does not keep order)
-// Sets related.R.Menus.
-func (o *Menu) RemoveSetMenuSets(ctx context.Context, exec boil.ContextExecutor, related ...*MenuSet) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	query := fmt.Sprintf(
-		"delete from `menu_set_details` where `menu_id` = ? and `set_id` in (%s)",
-		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
-	)
-	values := []interface{}{o.MenuID}
-	for _, rel := range related {
-		values = append(values, rel.SetID)
-	}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err = exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-	removeSetMenuSetsFromMenusSlice(o, related)
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.SetMenuSets {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.SetMenuSets)
-			if ln > 1 && i < ln-1 {
-				o.R.SetMenuSets[i] = o.R.SetMenuSets[ln-1]
-			}
-			o.R.SetMenuSets = o.R.SetMenuSets[:ln-1]
-			break
-		}
-	}
-
-	return nil
-}
-
-func removeSetMenuSetsFromMenusSlice(o *Menu, related []*MenuSet) {
-	for _, rel := range related {
-		if rel.R == nil {
-			continue
-		}
-		for i, ri := range rel.R.Menus {
-			if o.MenuID != ri.MenuID {
-				continue
-			}
-
-			ln := len(rel.R.Menus)
-			if ln > 1 && i < ln-1 {
-				rel.R.Menus[i] = rel.R.Menus[ln-1]
-			}
-			rel.R.Menus = rel.R.Menus[:ln-1]
-			break
-		}
-	}
-}
-
 // Menus retrieves all the records using an executor.
 func Menus(mods ...qm.QueryMod) menuQuery {
 	mods = append(mods, qm.From("`menus`"))
@@ -984,13 +610,13 @@ func Menus(mods ...qm.QueryMod) menuQuery {
 }
 
 // FindMenuG retrieves a single record by ID.
-func FindMenuG(ctx context.Context, menuID int, selectCols ...string) (*Menu, error) {
-	return FindMenu(ctx, boil.GetContextDB(), menuID, selectCols...)
+func FindMenuG(ctx context.Context, storeID int, menuID int, selectCols ...string) (*Menu, error) {
+	return FindMenu(ctx, boil.GetContextDB(), storeID, menuID, selectCols...)
 }
 
 // FindMenu retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindMenu(ctx context.Context, exec boil.ContextExecutor, menuID int, selectCols ...string) (*Menu, error) {
+func FindMenu(ctx context.Context, exec boil.ContextExecutor, storeID int, menuID int, selectCols ...string) (*Menu, error) {
 	menuObj := &Menu{}
 
 	sel := "*"
@@ -998,10 +624,10 @@ func FindMenu(ctx context.Context, exec boil.ContextExecutor, menuID int, select
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `menus` where `menu_id`=?", sel,
+		"select %s from `menus` where `store_id`=? AND `menu_id`=?", sel,
 	)
 
-	q := queries.Raw(query, menuID)
+	q := queries.Raw(query, storeID, menuID)
 
 	err := q.Bind(ctx, exec, menuObj)
 	if err != nil {
@@ -1095,6 +721,7 @@ func (o *Menu) Insert(ctx context.Context, exec boil.ContextExecutor, columns bo
 	}
 
 	identifierCols = []interface{}{
+		o.StoreID,
 		o.MenuID,
 	}
 
@@ -1267,9 +894,7 @@ func (o *Menu) UpsertG(ctx context.Context, updateColumns, insertColumns boil.Co
 	return o.Upsert(ctx, boil.GetContextDB(), updateColumns, insertColumns)
 }
 
-var mySQLMenuUniqueColumns = []string{
-	"menu_id",
-}
+var mySQLMenuUniqueColumns = []string{}
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
@@ -1423,7 +1048,7 @@ func (o *Menu) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, er
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), menuPrimaryKeyMapping)
-	sql := "DELETE FROM `menus` WHERE `menu_id`=?"
+	sql := "DELETE FROM `menus` WHERE `store_id`=? AND `menu_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1538,7 +1163,7 @@ func (o *Menu) ReloadG(ctx context.Context) error {
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Menu) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindMenu(ctx, exec, o.MenuID)
+	ret, err := FindMenu(ctx, exec, o.StoreID, o.MenuID)
 	if err != nil {
 		return err
 	}
@@ -1587,21 +1212,21 @@ func (o *MenuSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) er
 }
 
 // MenuExistsG checks if the Menu row exists.
-func MenuExistsG(ctx context.Context, menuID int) (bool, error) {
-	return MenuExists(ctx, boil.GetContextDB(), menuID)
+func MenuExistsG(ctx context.Context, storeID int, menuID int) (bool, error) {
+	return MenuExists(ctx, boil.GetContextDB(), storeID, menuID)
 }
 
 // MenuExists checks if the Menu row exists.
-func MenuExists(ctx context.Context, exec boil.ContextExecutor, menuID int) (bool, error) {
+func MenuExists(ctx context.Context, exec boil.ContextExecutor, storeID int, menuID int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `menus` where `menu_id`=? limit 1)"
+	sql := "select exists(select 1 from `menus` where `store_id`=? AND `menu_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, menuID)
+		fmt.Fprintln(writer, storeID, menuID)
 	}
-	row := exec.QueryRowContext(ctx, sql, menuID)
+	row := exec.QueryRowContext(ctx, sql, storeID, menuID)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1613,5 +1238,5 @@ func MenuExists(ctx context.Context, exec boil.ContextExecutor, menuID int) (boo
 
 // Exists checks if the Menu row exists.
 func (o *Menu) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return MenuExists(ctx, exec, o.MenuID)
+	return MenuExists(ctx, exec, o.StoreID, o.MenuID)
 }

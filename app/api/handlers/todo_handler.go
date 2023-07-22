@@ -5,7 +5,7 @@ import (
 	"app/api/presenter"
 	"app/api/requests"
 	"app/api/validation"
-	"app/pkg/todo"
+	"app/pkg/core/usecase"
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-func GetAllTodos(usecase todo.Usecase) fiber.Handler {
+func GetAllTodos(usecase usecase.TodoUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Create cancellable context.
 		customContext, cancel := context.WithCancel(context.Background())
@@ -28,7 +28,7 @@ func GetAllTodos(usecase todo.Usecase) fiber.Handler {
 	}
 }
 
-func GetTodosWithRelated(usecase todo.Usecase) fiber.Handler {
+func GetTodosWithRelated(usecase usecase.TodoUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -48,7 +48,7 @@ func GetTodosWithRelated(usecase todo.Usecase) fiber.Handler {
 	}
 }
 
-func GetTodoById(usecase todo.Usecase) fiber.Handler {
+func GetTodoById(usecase usecase.TodoUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -64,7 +64,7 @@ func GetTodoById(usecase todo.Usecase) fiber.Handler {
 	}
 }
 
-func AddTodo(usecase todo.Usecase) fiber.Handler {
+func AddTodo(usecase usecase.TodoUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -92,7 +92,7 @@ func AddTodo(usecase todo.Usecase) fiber.Handler {
 	}
 }
 
-func UpdateTodo(usecase todo.Usecase) fiber.Handler {
+func UpdateTodo(usecase usecase.TodoUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()

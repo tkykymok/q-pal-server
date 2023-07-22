@@ -1,9 +1,27 @@
-DROP DATABASE IF EXISTS q_mate_db;
-CREATE DATABASE q_mate_db;
-USE q_mate_db;
+DROP DATABASE IF EXISTS q_pal_db;
+CREATE DATABASE q_pal_db;
+USE q_pal_db;
+
+
+DROP TABLE IF EXISTS `todos`;
+DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `customers`;
+DROP TABLE IF EXISTS `companies`;
+DROP TABLE IF EXISTS `stores`;
+DROP TABLE IF EXISTS `favorite_stores`;
+DROP TABLE IF EXISTS `staffs`;
+DROP TABLE IF EXISTS `store_staff`;
+DROP TABLE IF EXISTS `active_staff`;
+DROP TABLE IF EXISTS `reservations`;
+DROP TABLE IF EXISTS `reservation_menus`;
+DROP TABLE IF EXISTS `visit_history`;
+DROP TABLE IF EXISTS `menus`;
+DROP TABLE IF EXISTS `menu_sets`;
+DROP TABLE IF EXISTS `menu_set_details`;
+DROP TABLE IF EXISTS `notifications`;
 
 -- todos
-DROP TABLE IF EXISTS `todos`;
+
 CREATE TABLE `todos`
 (
     `id`         INT         NOT NULL AUTO_INCREMENT,
@@ -22,7 +40,6 @@ INSERT INTO `todos` (`id`, `title`, `completed`, `userId`, `deleted`, `created_a
 VALUES ('3', 'テスト3', '0', '1', '0', '2022-01-01');
 
 -- users
-DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users`
 (
     `id`   INT         NOT NULL AUTO_INCREMENT,
@@ -32,8 +49,9 @@ CREATE TABLE `users`
 INSERT INTO `users` (`id`, `name`)
 VALUES ('1', '山田');
 
+SET FOREIGN_KEY_CHECKS=0;
+
 -- customers
-DROP TABLE IF EXISTS `customers`;
 CREATE TABLE `customers`
 (
     `customer_id`     INT PRIMARY KEY,
@@ -45,7 +63,6 @@ CREATE TABLE `customers`
 );
 
 -- companies
-DROP TABLE IF EXISTS `companies`;
 CREATE TABLE `companies`
 (
     `company_id`   INT PRIMARY KEY,
@@ -53,7 +70,6 @@ CREATE TABLE `companies`
 );
 
 -- stores
-DROP TABLE IF EXISTS `stores`;
 CREATE TABLE `stores`
 (
     `store_id`       INT PRIMARY KEY,
@@ -66,7 +82,6 @@ CREATE TABLE `stores`
 );
 
 -- favorite_stores
-DROP TABLE IF EXISTS `favorite_stores`;
 CREATE TABLE `favorite_stores`
 (
     `customer_id`  INT,
@@ -76,9 +91,8 @@ CREATE TABLE `favorite_stores`
     FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`)
 );
 
--- staff
-DROP TABLE IF EXISTS `staff`;
-CREATE TABLE `staff`
+-- staffs
+CREATE TABLE `staffs`
 (
     `staff_id`        INT PRIMARY KEY,
     `name`            VARCHAR(255),
@@ -86,30 +100,27 @@ CREATE TABLE `staff`
 );
 
 -- store_staff
-DROP TABLE IF EXISTS `store_staff`;
 CREATE TABLE `store_staff`
 (
     `staff_id` INT,
     `store_id` INT,
     PRIMARY KEY (`staff_id`, `store_id`),
-    FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`),
+    FOREIGN KEY (`staff_id`) REFERENCES `staffs` (`staff_id`),
     FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`)
 );
 
--- active_staff
-DROP TABLE IF EXISTS `active_staff`;
-CREATE TABLE `active_staff`
+-- active_staffs
+CREATE TABLE `active_staffs`
 (
     `staff_id`             INT PRIMARY KEY,
-    `store_id`             INT,
+    `store_id`             INT NOT NULL,
     `break_start_datetime` DATETIME,
     `break_end_datetime`   DATETIME,
-    FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`),
+    FOREIGN KEY (`staff_id`) REFERENCES `staffs` (`staff_id`),
     FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`)
 );
 
 -- reservations
-DROP TABLE IF EXISTS `reservations`;
 CREATE TABLE `reservations`
 (
     `reservation_id`         INT PRIMARY KEY,
@@ -121,27 +132,27 @@ CREATE TABLE `reservations`
     `hold_start_datetime`    DATETIME,
     `service_start_datetime` DATETIME,
     `service_end_datetime`   DATETIME,
-    `status`                 INT,
+    `status`                 INT NOT NULL DEFAULT 0,
     `arrival_flag`           BOOLEAN NOT NULL DEFAULT 0,
-    `cancel_flag`            BOOLEAN NOT NULL DEFAULT 0,
     `cancel_type`            INT,
     FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`),
     FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`),
-    FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`)
+    FOREIGN KEY (`staff_id`) REFERENCES `staffs` (`staff_id`)
 );
 
 -- reservation_menus
-DROP TABLE IF EXISTS `reservation_menus`;
 CREATE TABLE `reservation_menus`
 (
     `reservation_id` INT,
-    `menu_id`        INT,
-    PRIMARY KEY (`reservation_id`, `menu_id`),
+    `store_id` INT,
+    `menu_id` INT,
+    PRIMARY KEY (`reservation_id`, `store_id`, `menu_id`),
+    FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`),
     FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`reservation_id`)
 );
 
+
 -- visit_history
-DROP TABLE IF EXISTS `visit_history`;
 CREATE TABLE `visit_history`
 (
     `visit_history_id` INT PRIMARY KEY,
@@ -152,43 +163,44 @@ CREATE TABLE `visit_history`
 );
 
 -- menus
-DROP TABLE IF EXISTS `menus`;
 CREATE TABLE `menus`
 (
-    `menu_id`   INT PRIMARY KEY,
     `store_id`  INT,
+    `menu_id`   INT,
     `menu_name` VARCHAR(255),
     `price`     DECIMAL(10, 2),
-    `time`      INT,
+    `time`      INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`store_id`, `menu_id`),
     FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`)
 );
 
 -- menu_sets
-DROP TABLE IF EXISTS `menu_sets`;
 CREATE TABLE `menu_sets`
 (
-    `set_id`    INT PRIMARY KEY,
-    `set_name`  VARCHAR(255),
-    `set_price` DECIMAL(10, 2)
+    `set_id`   INT,
+    `store_id` INT,
+    `set_name` VARCHAR(255),
+    `set_price` DECIMAL(10, 2),
+    PRIMARY KEY (`set_id`),
+    FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`)
 );
 
 -- menu_set_details
-DROP TABLE IF EXISTS `menu_set_details`;
 CREATE TABLE `menu_set_details`
 (
-    `set_id`  INT,
-    `menu_id` INT,
-    PRIMARY KEY (`set_id`, `menu_id`),
+    `set_id`   INT,
+    `store_id` INT,
+    `menu_id`  INT,
+    PRIMARY KEY ( `set_id`, `store_id`, `menu_id`),
     FOREIGN KEY (`set_id`) REFERENCES `menu_sets` (`set_id`),
-    FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`)
+    FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`)
 );
 
--- menu_set_details
-DROP TABLE IF EXISTS `notifications`;
+-- notifications
 CREATE TABLE `notifications`
 (
     `notification_id`      INT PRIMARY KEY,
-    `customer_id`              INT,
+    `customer_id`          INT,
     `reservation_id`       INT,
     `notification_type`    INT,
     `notification_content` TEXT,
@@ -218,16 +230,89 @@ VALUES
     (2, 'cognito2', 'Customer B', 'customerB@example.com', 2, '1991-02-02'),
     (3, 'cognito3', 'Customer C', 'customerC@example.com', 1, '1992-03-03'),
     (4, 'cognito4', 'Customer D', 'customerD@example.com', 2, '1993-04-04'),
-    (5, 'cognito5', 'Customer E', 'customerE@example.com', 1, '1994-05-05');
+    (5, 'cognito5', 'Customer E', 'customerE@example.com', 1, '1994-05-05'),
+    (6, 'cognito6', 'Customer F', 'customerF@example.com', 2, '1995-06-06'),
+    (7, 'cognito7', 'Customer G', 'customerG@example.com', 1, '1996-07-07'),
+    (8, 'cognito8', 'Customer H', 'customerH@example.com', 2, '1997-08-08'),
+    (9, 'cognito9', 'Customer I', 'customerI@example.com', 1, '1998-09-09'),
+    (10, 'cognito10', 'Customer J', 'customerJ@example.com', 2, '1999-10-10');
 
 
 -- reservationsテーブルにレコードを5つ挿入
--- ここでは、user_id, store_id, staff_idは適当な値を設定しています。実際には、存在するCustomer, stores, staffのIDを設定してください。
-INSERT INTO `reservations` (`reservation_id`, `customer_id`, `store_id`, `staff_id`, `reservation_number`, `reserved_datetime`, `status`, `arrival_flag`, `cancel_type`)
+INSERT INTO `reservations` (`reservation_id`, `customer_id`, `store_id`, `staff_id`, `reservation_number`, `reserved_datetime`, `service_start_datetime`, `service_end_datetime`, `status`, `arrival_flag`, `cancel_type`)
 VALUES
-    (1, 1, 1, null, 101, now(), 1, false, null),
-    (2, 2, 1, null, 102, now(), 1, false, null),
-    (3, 3, 2, null, 103, now(), 1, false, null),
-    (4, 4, 2, null, 104, now(), 1, false, null),
-    (5, 5, 2, null, 105, now(), 1, false, null);
+    (1, 1, 1, null, 101, '2023-01-01 10:00:00', '2023-01-01 10:00:00', '2023-01-01 11:00:00', 2, false, null),
+    (2, 2, 1, null, 102, '2023-01-02 10:00:00', '2023-01-02 10:00:00', '2023-01-02 11:00:00', 2, false, null),
+
+    (3, 3, 2, null, 101, '2023-01-03 10:00:00', '2023-01-03 10:00:00', '2023-01-03 10:10:00', 2, false, null),
+    (4, 4, 2, null, 102, '2023-01-03 10:00:00', '2023-01-03 10:00:00', '2023-01-03 10:11:00', 2, false, null),
+    (5, 5, 2, null, 103, '2023-01-03 10:00:00', '2023-01-03 10:00:00', '2023-01-03 10:12:00', 2, false, null),
+
+    (6, 3, 2, null, 104, '2023-02-03 10:00:00', '2023-02-03 10:00:00', '2023-02-03 10:12:00', 2, false, null),
+    (7, 4, 2, null, 105, '2023-02-03 10:00:00', '2023-02-03 10:00:00', '2023-02-03 10:13:00', 2, false, null),
+    (8, 5, 2, null, 106, '2023-02-03 10:00:00', '2023-02-03 10:00:00', '2023-02-03 10:14:00', 2, false, null),
+
+    (9, 3, 2, null, 107, '2023-03-03 10:00:00', '2023-03-03 10:00:00', '2023-03-03 10:14:00', 2, false, null),
+    (10, 4, 2, null, 108, '2023-03-03 10:00:00', '2023-03-03 10:00:00', '2023-03-03 10:15:00', 2, false, null),
+    (11, 5, 2, null, 109, '2023-03-03 10:00:00', '2023-03-03 10:00:00', '2023-03-03 10:16:00', 2, false, null),
+
+    (12, 3, 2, 3, 101, now(), now(), null, 1, false, null),
+    (13, 4, 2, 4, 102, now(), now(), null, 1, false, null),
+    (14, 5, 2, null, 103, now(), null, null, 0, false, null),
+    (15, 6, 2, null, 106, now(), null, null, 0, false, null),
+    (16, 7, 2, null, 107, now(), null, null, 0, false, null),
+    (17, 8, 2, null, 108, now(), null, null, 0, false, null),
+    (18, 9, 2, null, 109, now(), null, null, 0, false, null),
+    (19, 10, 2, null, 110, now(), null, null, 0, false, null);
+
+
+INSERT INTO `menus` (`store_id`, `menu_id`, `menu_name`, `price`, `time`)
+VALUES
+    (1, 1, 'Menu 1', 1000, 15),
+    (2, 1, 'Menu 2', 1500, 15);
+
+
+INSERT INTO `reservation_menus` (`store_id`, `reservation_id`, `menu_id`)
+VALUES
+    (2, 3, 1),
+    (2, 4, 1),
+    (2, 5, 1),
+    (2, 6, 1),
+    (2, 7, 1),
+    (2, 8, 1),
+    (2, 9, 1),
+    (2, 10, 1),
+    (2, 11, 1),
+    (2, 12, 1),
+    (2, 13, 1),
+    (2, 14, 1),
+    (2, 15, 1),
+    (2, 16, 1),
+    (2, 17, 1),
+    (2, 18, 1),
+    (2, 19, 1);
+
+-- staffsテーブルへのデータ投入
+INSERT INTO `staffs` (`staff_id`, `name`, `cognito_user_id`)
+VALUES
+(1, 'Staff A', 'cognitoA'),
+(2, 'Staff B', 'cognitoB'),
+(3, 'Staff C', 'cognitoC'),
+(4, 'Staff D', 'cognitoD');
+
+-- store_staffテーブルへのデータ投入
+INSERT INTO `store_staff` (`staff_id`, `store_id`)
+VALUES
+(1, 1),
+(2, 1),
+(3, 2),
+(4, 2);
+
+
+INSERT INTO `active_staffs` (`staff_id`, `store_id`, `break_start_datetime`, `break_end_datetime`)
+VALUES
+(1, 1, null, null),
+(2, 1, null, null),
+(3, 2, null, null),
+(4, 2, null, null);
 

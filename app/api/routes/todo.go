@@ -2,11 +2,11 @@ package routes
 
 import (
 	"app/api/handlers"
-	"app/pkg/todo"
+	"app/pkg/core/usecase"
 	"github.com/gofiber/fiber/v2"
 )
 
-func TodoRouter(app fiber.Router, usecase todo.Usecase) {
+func TodoRouter(app fiber.Router, usecase usecase.TodoUsecase) {
 	app.Get("/todos", handlers.GetAllTodos(usecase))
 	app.Get("/todosWithRelated", handlers.GetTodosWithRelated(usecase))
 	app.Get("/todo/:id", handlers.GetTodoById(usecase))

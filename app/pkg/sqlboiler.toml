@@ -1,6 +1,6 @@
 [mysql]
-dbname = "q_mate_db"
-user = "qmate"
+dbname = "q_pal_db"
+user = "qpal"
 pass = "pass"
 host = "db"
 port = 3306
