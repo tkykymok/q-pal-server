@@ -5,9 +5,9 @@ import (
 	"app/pkg/exmodels"
 	"app/pkg/models"
 	"context"
+	"fmt"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"log"
 	"strings"
 )
 
@@ -15,7 +15,7 @@ type TodoRepository interface {
 	ReadAllTodos(ctx context.Context) (models.TodoSlice, error)
 	ReadTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]exmodels.TodoWithRelated, error)
 	ReadTodoById(ctx context.Context, id int) (*models.Todo, error)
-	CreateTodo(ctx context.Context, todo *models.Todo) error
+	CreateTodo(ctx context.Context, exec boil.ContextExecutor, todo *models.Todo) error
 	UpdateTodo(ctx context.Context, todo *models.Todo) error
 }
 
@@ -56,7 +56,7 @@ func (r todoRepository) ReadTodosWithRelated(ctx context.Context, request *reque
 	var result []exmodels.TodoWithRelated
 	err := models.Todos(mods...).BindG(ctx, &result)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to read todos with related: %w", err)
 	}
 
 	return &result, nil
@@ -66,18 +66,18 @@ func (r todoRepository) ReadTodoById(ctx context.Context, id int) (*models.Todo,
 	return models.FindTodoG(ctx, id)
 }
 
-func (r todoRepository) CreateTodo(ctx context.Context, todo *models.Todo) error {
-	err := todo.InsertG(ctx, boil.Infer())
+func (r todoRepository) CreateTodo(ctx context.Context, exec boil.ContextExecutor, todo *models.Todo) error {
+	err := todo.Insert(ctx, exec, boil.Infer())
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to Create Todo: %w", err)
 	}
-	return err
+	return nil
 }
 
 func (r todoRepository) UpdateTodo(ctx context.Context, todo *models.Todo) error {
 	_, err := todo.UpdateG(ctx, boil.Infer())
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to Update Todo: %w", err)
 	}
 	return err
 }

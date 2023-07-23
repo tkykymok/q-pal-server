@@ -8,6 +8,8 @@ import (
 	"app/pkg/models"
 	"app/pkg/outputs"
 	"context"
+	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type TodoUsecase interface {
@@ -34,7 +36,7 @@ func (u todoUsecase) FetchAllTodos(ctx context.Context) (*[]outputs.Todo, error)
 	todos := make([]outputs.Todo, 0)
 	result, err := u.repository.ReadAllTodos(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read all todos: %w", err)
 	}
 
 	for _, t := range result {
@@ -54,7 +56,7 @@ func (u todoUsecase) FetchTodosWithRelated(ctx context.Context, request *request
 	todos := make([]outputs.TodoWithRelated, 0)
 	result, err := u.repository.ReadTodosWithRelated(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read todos with related: %w", err)
 	}
 
 	for _, t := range *result {
@@ -74,7 +76,7 @@ func (u todoUsecase) FetchTodosWithRelated(ctx context.Context, request *request
 func (u todoUsecase) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, error) {
 	result, err := u.repository.ReadTodoById(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read todo by id: %w", err)
 	}
 
 	todo := outputs.Todo{
@@ -88,19 +90,40 @@ func (u todoUsecase) FetchTodoById(ctx context.Context, id int) (*outputs.Todo, 
 }
 
 func (u todoUsecase) InsertTodo(ctx context.Context, todo *requests.AddTodo) error {
+	// Start a new transaction
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	// Defer a rollback in case anything fails
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
 	cTodo := models.Todo{
 		Title: todo.Title,
 	}
-	err := u.repository.CreateTodo(ctx, &cTodo)
+	// Pass the transaction to the repository method
+	err = u.repository.CreateTodo(ctx, tx, &cTodo)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create todo: %w", err)
 	}
 
 	// broadcast the new Todo
 	err = u.BroadcastNewTodo(&cTodo)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to broadcast new todo: %w", err)
 	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return nil
 }
 
@@ -110,7 +133,11 @@ func (u todoUsecase) UpdateTodo(ctx context.Context, todo *requests.UpdateTodo) 
 		Title:     todo.Title,
 		Completed: todo.Completed,
 	}
-	return u.repository.UpdateTodo(ctx, &uTodo)
+	err := u.repository.UpdateTodo(ctx, &uTodo)
+	if err != nil {
+		return fmt.Errorf("failed to update todo: %w", err)
+	}
+	return nil
 }
 
 func (u todoUsecase) BroadcastNewTodo(todo *models.Todo) error {
@@ -123,5 +150,6 @@ func (u todoUsecase) BroadcastNewTodo(todo *models.Todo) error {
 	}
 
 	broadcast.TodoClient.SendNewTodo(pTodo)
+
 	return nil
 }
