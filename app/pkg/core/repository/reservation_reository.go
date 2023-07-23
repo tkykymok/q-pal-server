@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"log"
 	"strings"
 	"time"
 )
@@ -82,7 +81,7 @@ func (r reservationRepository) ReadTodayReservations(ctx context.Context, storeI
 	var result []exmodels.ReservationWithRelated
 	err := models.Reservations(mods...).BindG(ctx, &result)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to read reservation with related: %w", err)
 	}
 
 	return &result, nil
@@ -122,7 +121,7 @@ func (r reservationRepository) ReadHandleTimes(ctx context.Context, storeId int)
 	var result []exmodels.HandleTime
 	err := models.Reservations(mods...).BindG(ctx, &result)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to read handle time: %w", err)
 	}
 
 	return &result, nil

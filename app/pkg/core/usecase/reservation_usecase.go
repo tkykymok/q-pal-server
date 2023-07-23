@@ -5,6 +5,7 @@ import (
 	"app/pkg/enum"
 	"app/pkg/outputs"
 	"context"
+	"fmt"
 )
 
 type ReservationUsecase interface {
@@ -36,9 +37,8 @@ func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId in
 		enum.Pending,
 		enum.Canceled,
 	)
-
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read today reservations: %w", err)
 	}
 
 	for _, t := range *result {
@@ -71,7 +71,7 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 		enum.InProgress, // 案内中
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read line end wai time: %w", err)
 	}
 
 	// 次の予約番号
@@ -84,7 +84,7 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 		// 顧客ごとの過去履歴に紐づく施術時間一覧を取得する
 		handleTimes, err := u.reservationRepository.ReadHandleTimes(ctx, storeId)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read handle times: %w", err)
 		}
 
 		// 予約一覧に対する施術時間を更新する
@@ -93,7 +93,7 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 		// 施術中スタッフ一覧スタッフの対応可能時間を取得する
 		activeStaffs, err := u.activeStaffRepository.ReadActiveStaffs(ctx, storeId)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read active staffs: %w", err)
 		}
 		staffAvailableTimes := u.getStaffAvailableTimes(activeStaffs, reservations)
 
