@@ -2,7 +2,7 @@ package presenter
 
 import (
 	"app/pkg/enum"
-	"app/pkg/outputs"
+	"app/pkg/usecaseoutputs"
 	"app/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/volatiletech/null/v8"
@@ -29,7 +29,11 @@ type WaitTime struct {
 	Time              int `json:"time" `
 }
 
-func GetReservationsResponse(data *[]outputs.Reservation) *fiber.Map {
+type ReservationMessage struct {
+	Message string `json:"message" `
+}
+
+func GetReservationsResponse(data *[]usecaseoutputs.Reservation) *fiber.Map {
 	reservations := make([]Reservation, 0)
 	for _, t := range *data {
 		reservation := Reservation{
@@ -54,7 +58,7 @@ func GetReservationsResponse(data *[]outputs.Reservation) *fiber.Map {
 	}
 }
 
-func GetWaitTimeResponse(data *outputs.WaitTime) *fiber.Map {
+func GetWaitTimeResponse(data *usecaseoutputs.WaitTime) *fiber.Map {
 	waitTime := WaitTime{
 		ReservationNumber: data.ReservationNumber,
 		Position:          data.Position,

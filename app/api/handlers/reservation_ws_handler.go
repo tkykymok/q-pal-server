@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"app/api/presenter"
 	"app/pkg/broadcast"
 	"app/pkg/core/usecase"
 	"context"
@@ -8,41 +9,39 @@ import (
 	"log"
 	"strconv"
 
-	"app/api/presenter"
 	"app/api/requests"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 )
 
-func UpgradeTodoWsHandler(service usecase.TodoUsecase) func(c *fiber.Ctx) error {
+func UpgradeReservationWsHandler(service usecase.ReservationUsecase) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return websocket.New(func(c *websocket.Conn) {
-				userIdStr := c.Query("userId", "0")
-				userId, _ := strconv.Atoi(userIdStr)
+				storeIdStr := c.Query("storeId", "0")
+				storeId, _ := strconv.Atoi(storeIdStr)
 
 				// add the connection to the global clients map
-				broadcast.TodoClient.AddClient("todo", userId, c) // <- Use the broadcast package here
-
+				broadcast.ReservationClient.AddClient("reservation", storeId, c) // <- Use the broadcast package here
 				defer func() {
 					// remove the connection when done
-					broadcast.TodoClient.RemoveClient("todo", userId, c) // <- And here
+					broadcast.ReservationClient.RemoveClient("reservation", storeId, c) // <- And here
 					err := c.Close()
 					if err != nil {
 						return
 					}
 				}()
-				handleTodoWsConnection(service)(c)
+				handleReservationWsConnection(service)(c)
 			})(c)
 		}
 		return c.Next()
 	}
 }
 
-func handleTodoWsConnection(service usecase.TodoUsecase) func(*websocket.Conn) {
+func handleReservationWsConnection(service usecase.ReservationUsecase) func(*websocket.Conn) {
 	return func(c *websocket.Conn) {
 		// Create cancellable context.
-		customContext, cancel := context.WithCancel(context.Background())
+		_, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		// Infinite loop to handle multiple messages
@@ -62,26 +61,14 @@ func handleTodoWsConnection(service usecase.TodoUsecase) func(*websocket.Conn) {
 
 			// Map of message types to handlers
 			handlers := map[string]func() error{
-				"get all todos": func() error {
-					fetched, err := service.FetchAllTodos(customContext)
+				"on input": func() error {
+					var notification presenter.InputNotification
+					err := json.Unmarshal(wsMsg.Data, &notification)
 					if err != nil {
 						return err
 					}
-					response := presenter.GetAllTodosResponse(fetched)
-					return c.WriteJSON(response)
-				},
-				"get todos with related": func() error {
-					var request requests.GetTodosWithRelated
-					err := json.Unmarshal(wsMsg.Data, &request)
-					if err != nil {
-						return err
-					}
-					fetched, err := service.FetchTodosWithRelated(customContext, &request)
-					if err != nil {
-						return err
-					}
-					response := presenter.GetTodosWithRelatedResponse(fetched)
-					return c.WriteJSON(response)
+					broadcast.TodoInputClient.SendInputNotification(notification)
+					return nil
 				},
 			}
 

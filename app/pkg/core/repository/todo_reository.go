@@ -16,7 +16,7 @@ type TodoRepository interface {
 	ReadTodosWithRelated(ctx context.Context, request *requests.GetTodosWithRelated) (*[]exmodels.TodoWithRelated, error)
 	ReadTodoById(ctx context.Context, id int) (*models.Todo, error)
 	CreateTodo(ctx context.Context, exec boil.ContextExecutor, todo *models.Todo) error
-	UpdateTodo(ctx context.Context, todo *models.Todo) error
+	UpdateTodo(ctx context.Context, exec boil.ContextExecutor, todo *models.Todo) error
 }
 
 type todoRepository struct {
@@ -69,15 +69,15 @@ func (r todoRepository) ReadTodoById(ctx context.Context, id int) (*models.Todo,
 func (r todoRepository) CreateTodo(ctx context.Context, exec boil.ContextExecutor, todo *models.Todo) error {
 	err := todo.Insert(ctx, exec, boil.Infer())
 	if err != nil {
-		return fmt.Errorf("failed to Create Todo: %w", err)
+		return fmt.Errorf("failed to create todo: %w", err)
 	}
 	return nil
 }
 
-func (r todoRepository) UpdateTodo(ctx context.Context, todo *models.Todo) error {
-	_, err := todo.UpdateG(ctx, boil.Infer())
+func (r todoRepository) UpdateTodo(ctx context.Context, exec boil.ContextExecutor, todo *models.Todo) error {
+	_, err := todo.Update(ctx, exec, boil.Infer())
 	if err != nil {
-		return fmt.Errorf("failed to Update Todo: %w", err)
+		return fmt.Errorf("failed to update todo: %w", err)
 	}
-	return err
+	return nil
 }

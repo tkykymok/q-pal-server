@@ -88,7 +88,7 @@ func AddTodo(usecase usecase.TodoUsecase) fiber.Handler {
 			return c.JSON(presenter.ErrorResponse(err))
 		}
 
-		return c.JSON(presenter.SuccessResponse(message.GetMessage("success", "登録")))
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "登録")))
 	}
 }
 
@@ -117,6 +117,6 @@ func UpdateTodo(usecase usecase.TodoUsecase) fiber.Handler {
 			return c.JSON(presenter.ErrorResponse(err))
 		}
 
-		return c.JSON(presenter.SuccessResponse(message.GetMessage("success", "更新")))
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "更新")))
 	}
 }

@@ -1,33 +1,45 @@
 package usecase
 
 import (
+	"app/pkg/constant"
 	"app/pkg/core/repository"
 	"app/pkg/enum"
-	"app/pkg/outputs"
+	"app/pkg/models"
+	"app/pkg/usecaseinputs"
+	"app/pkg/usecaseoutputs"
 	"context"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"time"
 )
 
 type ReservationUsecase interface {
-	FetchAllReservations(ctx context.Context, storeId int) (*[]outputs.Reservation, error)
-	FetchLineEndWaitTime(ctx context.Context, storeId int) (*outputs.WaitTime, error)
-	FetchIndividualWaitTime(ctx context.Context, storeId int, reservationId int) (*outputs.WaitTime, error)
+	FetchAllReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error)
+	FetchLineEndWaitTime(ctx context.Context, storeId int) (*usecaseoutputs.WaitTime, error)
+	FetchIndividualWaitTime(ctx context.Context, storeId int, reservationId int) (*usecaseoutputs.WaitTime, error)
+	CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) error
 }
 
 type reservationUsecase struct {
-	reservationRepository repository.ReservationRepository
-	activeStaffRepository repository.ActiveStaffRepository
+	reservationRepository     repository.ReservationRepository
+	reservationMenuRepository repository.ReservationMenuRepository
+	activeStaffRepository     repository.ActiveStaffRepository
 }
 
-func NewReservationUsecase(rr repository.ReservationRepository, asr repository.ActiveStaffRepository) ReservationUsecase {
+func NewReservationUsecase(
+	rr repository.ReservationRepository,
+	rmr repository.ReservationMenuRepository,
+	asr repository.ActiveStaffRepository,
+) ReservationUsecase {
 	return &reservationUsecase{
-		reservationRepository: rr,
-		activeStaffRepository: asr,
+		reservationRepository:     rr,
+		reservationMenuRepository: rmr,
+		activeStaffRepository:     asr,
 	}
 }
 
-func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId int) (*[]outputs.Reservation, error) {
-	reservations := make([]outputs.Reservation, 0)
+func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error) {
+	reservations := make([]usecaseoutputs.Reservation, 0)
 	result, err := u.reservationRepository.ReadTodayReservations(
 		ctx,
 		storeId,
@@ -38,11 +50,11 @@ func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId in
 		enum.Canceled,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read today reservations: %w", err)
+		return nil, fmt.Errorf("failed to Fetch all reservations: %w", err)
 	}
 
 	for _, t := range *result {
-		reservation := outputs.Reservation{
+		reservation := usecaseoutputs.Reservation{
 			ReservationID:        t.ReservationID,
 			CustomerID:           t.CustomerID,
 			StoreID:              t.StoreID,
@@ -62,7 +74,7 @@ func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId in
 	return &reservations, nil
 }
 
-func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId int) (*outputs.WaitTime, error) {
+func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId int) (*usecaseoutputs.WaitTime, error) {
 	// 本日の予約一覧を取得
 	reservations, err := u.reservationRepository.ReadTodayReservations(
 		ctx,
@@ -71,11 +83,14 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 		enum.InProgress, // 案内中
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read line end wai time: %w", err)
+		return nil, fmt.Errorf("failed to read line end wait time: %w", err)
 	}
 
 	// 次の予約番号
-	nextReservationNumber := u.getNextReservationNumber(ctx, storeId)
+	nextReservationNumber, err := u.getNextReservationNumber(ctx, storeId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to line end wait time: %w", err)
+	}
 	// 次の順番
 	position := 1
 	// 現在の待ち時間
@@ -84,7 +99,7 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 		// 顧客ごとの過去履歴に紐づく施術時間一覧を取得する
 		handleTimes, err := u.reservationRepository.ReadHandleTimes(ctx, storeId)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read handle times: %w", err)
+			return nil, fmt.Errorf("failed to read line end wait time: %w", err)
 		}
 
 		// 予約一覧に対する施術時間を更新する
@@ -93,7 +108,7 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 		// 施術中スタッフ一覧スタッフの対応可能時間を取得する
 		activeStaffs, err := u.activeStaffRepository.ReadActiveStaffs(ctx, storeId)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read active staffs: %w", err)
+			return nil, fmt.Errorf("failed to read line end wait time: %w", err)
 		}
 		staffAvailableTimes := u.getStaffAvailableTimes(activeStaffs, reservations)
 
@@ -101,14 +116,14 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 		waitTime = calcWaitTime(*reservations, *staffAvailableTimes, len(*reservations))
 	}
 
-	return &outputs.WaitTime{
+	return &usecaseoutputs.WaitTime{
 		ReservationNumber: nextReservationNumber,
 		Position:          position,
 		Time:              waitTime,
 	}, nil
 }
 
-func (u reservationUsecase) FetchIndividualWaitTime(ctx context.Context, storeId int, reservationId int) (*outputs.WaitTime, error) {
+func (u reservationUsecase) FetchIndividualWaitTime(ctx context.Context, storeId int, reservationId int) (*usecaseoutputs.WaitTime, error) {
 	// 予約一覧を取得
 	reservations, _ := u.reservationRepository.ReadTodayReservations(
 		ctx,
@@ -141,9 +156,67 @@ func (u reservationUsecase) FetchIndividualWaitTime(ctx context.Context, storeId
 
 	waitTime := calcWaitTime(*reservations, *staffAvailableTimes, position)
 
-	return &outputs.WaitTime{
+	return &usecaseoutputs.WaitTime{
 		ReservationNumber: reservationNumber,
 		Position:          position,
 		Time:              waitTime,
 	}, nil
+}
+
+func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) error {
+	// トランザクション開始する
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	// トランザクションをcontextに紐づける
+	ctxWithTx := context.WithValue(ctx, constant.ContextExecutorKey, tx)
+
+	// エラーの場合ロールバックする
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	// 次の予約番号を取得する
+	nextReservationNumber, err := u.getNextReservationNumber(ctxWithTx, input.StoreID)
+	if err != nil {
+		return fmt.Errorf("failed to create reservation: %w", err)
+	}
+
+	// 予約を登録する
+	cRes := &models.Reservation{
+		CustomerID:        input.CustomerID,
+		StoreID:           input.StoreID,
+		ReservationNumber: nextReservationNumber,
+		ReservedDatetime:  time.Now(),
+		Status:            int(enum.Waiting),
+	}
+	_, err = u.reservationRepository.InsertReservation(ctxWithTx, cRes)
+	if err != nil {
+		return fmt.Errorf("failed to create reservation: %w", err)
+	}
+
+	// 予約メニューを登録する
+	cResMn := &models.ReservationMenu{
+		ReservationID: cRes.ReservationID,
+		StoreID:       input.StoreID,
+		MenuID:        input.MenuID,
+	}
+	err = u.reservationMenuRepository.InsertReservationMenu(ctx, cResMn)
+	if err != nil {
+		return fmt.Errorf("failed to create reservation: %w", err)
+	}
+
+	// トランザクションをコミットする
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	// 追加された予約をブロードキャストする
+	u.broadcastNewReservation(2, "reservation updated") // TODO storeIdハードコーディングを修正する
+
+	return nil
 }

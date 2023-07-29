@@ -1,11 +1,14 @@
 package repository
 
 import (
+	"app/pkg/constant"
 	"app/pkg/enum"
 	"app/pkg/exmodels"
 	"app/pkg/models"
+	"app/pkg/utils"
 	"context"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"strings"
 	"time"
@@ -13,7 +16,12 @@ import (
 
 type ReservationRepository interface {
 	ReadTodayReservations(ctx context.Context, storeId int, status ...enum.ReservationStatus) (*[]exmodels.ReservationWithRelated, error)
+
+	ReadLatestReservation(ctx context.Context, storeId int) (models.ReservationSlice, error)
+
 	ReadHandleTimes(ctx context.Context, storeId int) (*[]exmodels.HandleTime, error)
+
+	InsertReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error)
 }
 
 type reservationRepository struct {
@@ -44,12 +52,6 @@ func (r reservationRepository) ReadTodayReservations(ctx context.Context, storeI
 		models.MenuTableColumns.Time,
 	}
 
-	currentTime := time.Now()
-	// 現在の日付の開始時刻を取得
-	startOfDay := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, currentTime.Location())
-	// 現在の日付の終了時刻を取得
-	endOfDay := startOfDay.Add(time.Hour*24 - time.Second)
-
 	// Convert ReservationStatus slice to int slice
 	statusInts := make([]interface{}, len(status))
 	for i, s := range status {
@@ -72,8 +74,8 @@ func (r reservationRepository) ReadTodayReservations(ctx context.Context, storeI
 			models.MenuTableColumns.StoreID,
 		)),
 		qm.Where(fmt.Sprintf("%s = ?", models.ReservationTableColumns.StoreID), storeId),
-		qm.Where(fmt.Sprintf("%s >= ?", models.ReservationTableColumns.ReservedDatetime), startOfDay),
-		qm.Where(fmt.Sprintf("%s <= ?", models.ReservationTableColumns.ReservedDatetime), endOfDay),
+		qm.Where(fmt.Sprintf("%s >= ?", models.ReservationTableColumns.ReservedDatetime), utils.GetStartOfDay()),
+		qm.Where(fmt.Sprintf("%s <= ?", models.ReservationTableColumns.ReservedDatetime), utils.GetEndOfDay()),
 		qm.WhereIn(fmt.Sprintf("%s in ?", models.ReservationTableColumns.Status), statusInts...),
 		qm.OrderBy(fmt.Sprintf("%s", models.ReservationTableColumns.ReservationNumber)),
 	}
@@ -81,10 +83,34 @@ func (r reservationRepository) ReadTodayReservations(ctx context.Context, storeI
 	var result []exmodels.ReservationWithRelated
 	err := models.Reservations(mods...).BindG(ctx, &result)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read reservation with related: %w", err)
+		return nil, fmt.Errorf("failed to read  reservation with related: %w", err)
 	}
 
 	return &result, nil
+}
+
+func (r reservationRepository) ReadLatestReservation(ctx context.Context, storeId int) (models.ReservationSlice, error) {
+	// QueryModの生成
+	mods := []qm.QueryMod{
+		qm.Where(fmt.Sprintf("%s = ?", models.ReservationTableColumns.StoreID), storeId),
+		qm.Where(fmt.Sprintf("%s >= ?", models.ReservationTableColumns.ReservedDatetime), utils.GetStartOfDay()),
+		qm.Where(fmt.Sprintf("%s <= ?", models.ReservationTableColumns.ReservedDatetime), utils.GetEndOfDay()),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.ReservationTableColumns.ReservationNumber)),
+		qm.Limit(1),
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	if ctx.Value(constant.ContextExecutorKey) != nil {
+		// トランザクションあり
+		mods = append(mods, qm.For("update"))
+		//mods = append([]qm.QueryMod{qm.SQL("FOR UPDATE")}, mods...)
+		return models.Reservations(mods...).AllG(ctxWithTimeout)
+	} else {
+		// トランザクションなし
+		return models.Reservations(mods...).AllG(ctx)
+	}
 }
 
 // ReadHandleTimes 店舗に紐づく、顧客＆メニューごとの施術時間一覧を取得する
@@ -125,4 +151,14 @@ func (r reservationRepository) ReadHandleTimes(ctx context.Context, storeId int)
 	}
 
 	return &result, nil
+}
+
+func (r reservationRepository) InsertReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error) {
+	// トランザクションなし
+	err := reservation.InsertG(ctx, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("failed to Insert reservation: %w", err)
+	}
+
+	return reservation, nil
 }

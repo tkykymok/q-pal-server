@@ -1,4 +1,4 @@
-package outputs
+package usecaseoutputs
 
 import (
 	"github.com/volatiletech/null/v8"

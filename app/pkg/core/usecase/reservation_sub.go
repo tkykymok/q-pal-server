@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"app/api/presenter"
+	"app/pkg/broadcast"
 	"app/pkg/enum"
 	"app/pkg/exmodels"
 	"app/pkg/models"
@@ -139,22 +141,18 @@ func calcDiffTime(t null.Time) int {
 }
 
 // 店舗に紐づく最新予約番号を取得する
-func (u reservationUsecase) getNextReservationNumber(ctx context.Context, storeId int) int {
+func (u reservationUsecase) getNextReservationNumber(ctx context.Context, storeId int) (int, error) {
 	reservationNumber := 1 // 初期値
 	// 全ステータスの予約一覧を取得
-	reservations, _ := u.reservationRepository.ReadTodayReservations(
-		ctx,
-		storeId,
-		enum.Waiting,
-		enum.InProgress,
-		enum.Done,
-		enum.Pending,
-		enum.Canceled,
-	)
-	if len(*reservations) > 0 {
-		return (*reservations)[len(*reservations)-1].ReservationNumber + 1
+	reservations, err := u.reservationRepository.ReadLatestReservation(ctx, storeId)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get next reservation number: %w", err)
 	}
-	return reservationNumber
+	// 検索結果が存在する場合
+	if reservations != nil {
+		return (reservations)[len(reservations)-1].ReservationNumber + 1, nil
+	}
+	return reservationNumber, nil
 }
 
 // 案内待ちの予約数＋1番目の数を返す
@@ -166,4 +164,12 @@ func (u reservationUsecase) getNextPosition(reservations *[]exmodels.Reservation
 		}
 	}
 	return count
+}
+
+func (u reservationUsecase) broadcastNewReservation(storeId int, message string) {
+	messsage := presenter.ReservationMessage{
+		Message: message,
+	}
+
+	broadcast.ReservationClient.SendNewReservation(storeId, messsage)
 }

@@ -36,9 +36,9 @@ func GetValidationMessage(errTag string, fieldName string) string {
 	return message
 }
 
-func GetMessage(errTag string, args ...string) string {
+func GetMessage(tag Tag, args ...string) string {
 	initMessages()
-	message := messagesMapInstance[errTag]
+	message := messagesMapInstance[string(tag)]
 	for i, el := range args {
 		message = strings.Replace(message, "{"+strconv.Itoa(i)+"}", el, 1)
 	}

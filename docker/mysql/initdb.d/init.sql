@@ -123,7 +123,7 @@ CREATE TABLE `active_staffs`
 -- reservations
 CREATE TABLE `reservations`
 (
-    `reservation_id`         INT PRIMARY KEY,
+    `reservation_id`         INT PRIMARY KEY AUTO_INCREMENT,
     `customer_id`            INT NOT NULL,
     `store_id`               INT NOT NULL,
     `staff_id`               INT,
@@ -226,6 +226,7 @@ VALUES
 -- customersテーブルにレコードを5つ挿入
 INSERT INTO `customers` (`customer_id`, `cognito_user_id`, `name`, `email`, `gender`, `birthday`)
 VALUES
+    (0, null, 'guest', null, null, null),
     (1, 'cognito1', 'Customer A', 'customerA@example.com', 1, '1990-01-01'),
     (2, 'cognito2', 'Customer B', 'customerB@example.com', 2, '1991-02-02'),
     (3, 'cognito3', 'Customer C', 'customerC@example.com', 1, '1992-03-03'),

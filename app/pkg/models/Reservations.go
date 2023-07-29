@@ -236,8 +236,8 @@ type reservationL struct{}
 
 var (
 	reservationAllColumns            = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "status", "arrival_flag", "cancel_type"}
-	reservationColumnsWithoutDefault = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "cancel_type"}
-	reservationColumnsWithDefault    = []string{"status", "arrival_flag"}
+	reservationColumnsWithoutDefault = []string{"customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "cancel_type"}
+	reservationColumnsWithDefault    = []string{"reservation_id", "status", "arrival_flag"}
 	reservationPrimaryKeyColumns     = []string{"reservation_id"}
 	reservationGeneratedColumns      = []string{}
 )
@@ -2009,15 +2009,26 @@ func (o *Reservation) Insert(ctx context.Context, exec boil.ContextExecutor, col
 		fmt.Fprintln(writer, cache.query)
 		fmt.Fprintln(writer, vals)
 	}
-	_, err = exec.ExecContext(ctx, cache.query, vals...)
+	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
 		return errors.Wrap(err, "models: unable to insert into reservations")
 	}
 
+	var lastID int64
 	var identifierCols []interface{}
 
 	if len(cache.retMapping) == 0 {
+		goto CacheNoHooks
+	}
+
+	lastID, err = result.LastInsertId()
+	if err != nil {
+		return ErrSyncFail
+	}
+
+	o.ReservationID = int(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == reservationMapping["reservation_id"] {
 		goto CacheNoHooks
 	}
 
@@ -2293,16 +2304,27 @@ func (o *Reservation) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 		fmt.Fprintln(writer, cache.query)
 		fmt.Fprintln(writer, vals)
 	}
-	_, err = exec.ExecContext(ctx, cache.query, vals...)
+	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
 		return errors.Wrap(err, "models: unable to upsert for reservations")
 	}
 
+	var lastID int64
 	var uniqueMap []uint64
 	var nzUniqueCols []interface{}
 
 	if len(cache.retMapping) == 0 {
+		goto CacheNoHooks
+	}
+
+	lastID, err = result.LastInsertId()
+	if err != nil {
+		return ErrSyncFail
+	}
+
+	o.ReservationID = int(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == reservationMapping["reservation_id"] {
 		goto CacheNoHooks
 	}
 

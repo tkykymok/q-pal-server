@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"strconv"
 
 	"app/api/presenter"
 	"github.com/gofiber/fiber/v2"
@@ -17,11 +18,14 @@ func UpgradeTodoInputWsHandler(service usecase.TodoUsecase) func(c *fiber.Ctx) e
 	return func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return websocket.New(func(c *websocket.Conn) {
+				userIdStr := c.Query("userId", "0")
+				userId, _ := strconv.Atoi(userIdStr)
+
 				// add the connection to the global clients map
-				broadcast.TodoInputClient.AddClient(c) // <- Use the broadcast package here
+				broadcast.TodoInputClient.AddClient("todo_input", userId, c) // <- Use the broadcast package here
 				defer func() {
 					// remove the connection when done
-					broadcast.TodoInputClient.RemoveClient(c) // <- And here
+					broadcast.TodoInputClient.RemoveClient("todo_input", userId, c) // <- And here
 					err := c.Close()
 					if err != nil {
 						return

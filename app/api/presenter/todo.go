@@ -1,7 +1,7 @@
 package presenter
 
 import (
-	"app/pkg/outputs"
+	"app/pkg/usecaseoutputs"
 	"github.com/gofiber/fiber/v2"
 	"github.com/volatiletech/null/v8"
 )
@@ -26,7 +26,7 @@ type TodoWithRelated struct {
 	CreatedAt string      `json:"created_at,omitempty"`
 }
 
-func GetTodoByIdResponse(data *outputs.Todo) *fiber.Map {
+func GetTodoByIdResponse(data *usecaseoutputs.Todo) *fiber.Map {
 	todo := Todo{
 		ID:        data.ID,
 		Title:     data.Title,
@@ -38,7 +38,7 @@ func GetTodoByIdResponse(data *outputs.Todo) *fiber.Map {
 	}
 }
 
-func GetAllTodosResponse(data *[]outputs.Todo) *fiber.Map {
+func GetAllTodosResponse(data *[]usecaseoutputs.Todo) *fiber.Map {
 	todos := make([]Todo, 0)
 	for _, t := range *data {
 		todo := Todo{
@@ -55,7 +55,7 @@ func GetAllTodosResponse(data *[]outputs.Todo) *fiber.Map {
 	}
 }
 
-func GetTodosWithRelatedResponse(data *[]outputs.TodoWithRelated) *fiber.Map {
+func GetTodosWithRelatedResponse(data *[]usecaseoutputs.TodoWithRelated) *fiber.Map {
 	todos := make([]TodoWithRelated, 0)
 	for _, t := range *data {
 		todo := TodoWithRelated{
@@ -70,11 +70,5 @@ func GetTodosWithRelatedResponse(data *[]outputs.TodoWithRelated) *fiber.Map {
 
 	return &fiber.Map{
 		"data": data,
-	}
-}
-
-func SuccessResponse(message string) *fiber.Map {
-	return &fiber.Map{
-		"message": message,
 	}
 }
