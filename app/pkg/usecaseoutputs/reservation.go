@@ -18,10 +18,22 @@ type Reservation struct {
 	Status               int
 	ArrivalFlag          bool
 	CancelType           null.Int
+	Content              string
 }
 
 type WaitTime struct {
 	ReservationNumber int
 	Position          int
 	Time              int
+}
+
+type ReservationIdentifyKey struct {
+	ReservationID    int
+	StoreID          int
+	ReservedDatetime time.Time
+}
+
+type CreateReservation struct {
+	ReservationNumber int
+	Content           string
 }

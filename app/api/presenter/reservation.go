@@ -21,6 +21,7 @@ type Reservation struct {
 	Status               string   `json:"status" `
 	ArrivalFlag          bool     `json:"arrivalFlag" `
 	CancelType           null.Int `json:"cancelType" `
+	Content              string   `json:"content" `
 }
 
 type WaitTime struct {
@@ -31,6 +32,11 @@ type WaitTime struct {
 
 type ReservationMessage struct {
 	Message string `json:"message" `
+}
+
+type CreateReservation struct {
+	ReservationNumber int    `json:"reservationNumber"`
+	Content           string `json:"content"`
 }
 
 func GetReservationsResponse(data *[]usecaseoutputs.Reservation) *fiber.Map {
@@ -49,12 +55,13 @@ func GetReservationsResponse(data *[]usecaseoutputs.Reservation) *fiber.Map {
 			Status:               enum.ReservationStatusNames[enum.ReservationStatus(t.Status)],
 			ArrivalFlag:          t.ArrivalFlag,
 			CancelType:           t.CancelType,
+			Content:              t.Content,
 		}
 		reservations = append(reservations, reservation)
 	}
 
 	return &fiber.Map{
-		"reservations": reservations,
+		"data": reservations,
 	}
 }
 
@@ -67,5 +74,17 @@ func GetWaitTimeResponse(data *usecaseoutputs.WaitTime) *fiber.Map {
 
 	return &fiber.Map{
 		"data": waitTime,
+	}
+}
+
+func GetCreateReservationResponse(data *usecaseoutputs.CreateReservation, messages ...string) *fiber.Map {
+	encryptedStr := CreateReservation{
+		ReservationNumber: data.ReservationNumber,
+		Content:           data.Content,
+	}
+
+	return &fiber.Map{
+		"data":     encryptedStr,
+		"messages": messages,
 	}
 }

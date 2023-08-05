@@ -17,7 +17,7 @@ type ReservationUsecase interface {
 	FetchAllReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error)
 	FetchLineEndWaitTime(ctx context.Context, storeId int) (*usecaseoutputs.WaitTime, error)
 	FetchIndividualWaitTime(ctx context.Context, storeId int, reservationId int) (*usecaseoutputs.WaitTime, error)
-	CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) error
+	CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) (*usecaseoutputs.CreateReservation, error)
 }
 
 type reservationUsecase struct {
@@ -54,6 +54,11 @@ func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId in
 	}
 
 	for _, t := range *result {
+		// 予約を特定する暗号化した文字列を生成する
+		encryptedText, err := u.encryptReservation(t.ReservationID, t.StoreID, t.ReservedDatetime)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encrypt reservation: %w", err)
+		}
 		reservation := usecaseoutputs.Reservation{
 			ReservationID:        t.ReservationID,
 			CustomerID:           t.CustomerID,
@@ -67,6 +72,7 @@ func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId in
 			Status:               t.Status,
 			ArrivalFlag:          t.ArrivalFlag,
 			CancelType:           t.CancelType,
+			Content:              encryptedText,
 		}
 		reservations = append(reservations, reservation)
 	}
@@ -163,11 +169,11 @@ func (u reservationUsecase) FetchIndividualWaitTime(ctx context.Context, storeId
 	}, nil
 }
 
-func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) error {
+func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) (*usecaseoutputs.CreateReservation, error) {
 	// トランザクション開始する
 	tx, err := boil.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	// トランザクションをcontextに紐づける
 	ctxWithTx := context.WithValue(ctx, constant.ContextExecutorKey, tx)
@@ -182,7 +188,7 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	// 次の予約番号を取得する
 	nextReservationNumber, err := u.getNextReservationNumber(ctxWithTx, input.StoreID)
 	if err != nil {
-		return fmt.Errorf("failed to create reservation: %w", err)
+		return nil, fmt.Errorf("failed to create reservation: %w", err)
 	}
 
 	// 予約を登録する
@@ -193,9 +199,9 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 		ReservedDatetime:  time.Now(),
 		Status:            int(enum.Waiting),
 	}
-	_, err = u.reservationRepository.InsertReservation(ctxWithTx, cRes)
+	reservation, err := u.reservationRepository.InsertReservation(ctxWithTx, cRes)
 	if err != nil {
-		return fmt.Errorf("failed to create reservation: %w", err)
+		return nil, fmt.Errorf("failed to create reservation: %w", err)
 	}
 
 	// 予約メニューを登録する
@@ -206,17 +212,28 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	}
 	err = u.reservationMenuRepository.InsertReservationMenu(ctx, cResMn)
 	if err != nil {
-		return fmt.Errorf("failed to create reservation: %w", err)
+		return nil, fmt.Errorf("failed to create reservation: %w", err)
 	}
 
 	// トランザクションをコミットする
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// 追加された予約をブロードキャストする
-	u.broadcastNewReservation(2, "reservation updated") // TODO storeIdハードコーディングを修正する
+	// 予約追加の通知をブロードキャストする
+	u.broadcastNewReservation(2, "reservation created") // TODO storeIdハードコーディングを修正する
 
-	return nil
+	// 予約を特定する暗号化した文字列を生成する
+	encryptedText, err := u.encryptReservation(reservation.ReservationID, reservation.StoreID, reservation.ReservedDatetime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt reservation: %w", err)
+	}
+
+	output := &usecaseoutputs.CreateReservation{
+		ReservationNumber: reservation.ReservationNumber,
+		Content:           encryptedText,
+	}
+
+	return output, nil
 }

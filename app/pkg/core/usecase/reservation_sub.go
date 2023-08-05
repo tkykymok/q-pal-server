@@ -6,10 +6,17 @@ import (
 	"app/pkg/enum"
 	"app/pkg/exmodels"
 	"app/pkg/models"
+	"app/pkg/usecaseoutputs"
 	"container/heap"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/volatiletech/null/v8"
+	"io"
 	"time"
 )
 
@@ -167,9 +174,95 @@ func (u reservationUsecase) getNextPosition(reservations *[]exmodels.Reservation
 }
 
 func (u reservationUsecase) broadcastNewReservation(storeId int, message string) {
-	messsage := presenter.ReservationMessage{
+	reservationMessage := presenter.ReservationMessage{
 		Message: message,
 	}
 
-	broadcast.ReservationClient.SendNewReservation(storeId, messsage)
+	broadcast.ReservationClient.SendNewReservation(storeId, reservationMessage)
+}
+
+func (u reservationUsecase) encryptReservation(reservationId int, storeId int, reservedDatetime time.Time) (string, error) {
+	// 暗号化キーを設定します。
+	encryptKey := "pass1234pass1234"
+
+	// 暗号化するためのデータを構造体にセットします。
+	reservationKey := usecaseoutputs.ReservationIdentifyKey{
+		ReservationID:    reservationId,
+		StoreID:          storeId,
+		ReservedDatetime: reservedDatetime,
+	}
+
+	// 構造体をJSON形式に変換します。
+	jsonData, err := json.Marshal(reservationKey)
+	if err != nil {
+		return "", err
+	}
+
+	// AES暗号化アルゴリズムのための暗号化キーを生成します。
+	block, err := aes.NewCipher([]byte(encryptKey))
+	if err != nil {
+		return "", err
+	}
+
+	// GCM（Galois/Counter Mode）というAESのモードを生成します。これにより、暗号化と同時に改ざん検知が可能になります。
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	// ランダムなnonce（Number used once）を生成します。これは暗号化の初期ベクトルとして使用され、同じデータでも異なる暗号文を生成するために使われます。
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	// 暗号化を行い、nonceを暗号文の先頭に追加します。これにより、復号化時に同じnonceを使用できます。
+	ciphertext := gcm.Seal(nonce, nonce, jsonData, nil)
+
+	// 暗号文をBase64形式の文字列に変換します。これにより、バイナリデータをテキスト形式で安全に扱うことができます。
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+func (u reservationUsecase) decryptReservation(ciphertextStr string) (*usecaseoutputs.ReservationIdentifyKey, error) {
+	// 暗号化キーを設定します。
+	encryptKey := "pass1234pass1234"
+
+	// Base64形式の文字列をバイナリデータに戻します。
+	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextStr)
+	if err != nil {
+		return nil, err
+	}
+
+	// AES暗号化アルゴリズムのための暗号化キーを生成します。
+	block, err := aes.NewCipher([]byte(encryptKey))
+	if err != nil {
+		return nil, err
+	}
+
+	// GCM（Galois/Counter Mode）というAESのモードを生成します。これにより、暗号化と同時に改ざん検知が可能になります。
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	// nonceのサイズを取得します。
+	nonceSize := gcm.NonceSize()
+
+	// 暗号文からnonceと実際の暗号文を分離します。
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+
+	// 暗号文を復号化します。
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// 復号化したデータを構造体に戻します。
+	var reservationKey usecaseoutputs.ReservationIdentifyKey
+	err = json.Unmarshal(plaintext, &reservationKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &reservationKey, nil
 }

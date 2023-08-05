@@ -77,12 +77,12 @@ func CreateReservation(usecase usecase.ReservationUsecase) fiber.Handler {
 			MenuID:     1, // TODO
 		}
 
-		err = usecase.CreateReservation(customContext, &input)
+		output, err := usecase.CreateReservation(customContext, &input)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
 		}
 
-		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "予約")))
+		return c.JSON(presenter.GetCreateReservationResponse(output, message.GetMessage(message.SUCCESS, "予約")))
 	}
 }
