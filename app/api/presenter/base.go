@@ -1,17 +1,16 @@
 package presenter
 
-import "github.com/gofiber/fiber/v2"
+type T any
 
-type BaseResponse struct {
+type ApiResponse struct {
+	Data     T        `json:"data" `
 	Messages []string `json:"messages" `
 }
 
-func GetSuccessResponse(messages ...string) *fiber.Map {
-	data := BaseResponse{
+func GetSuccessResponse(messages ...string) ApiResponse {
+	data := ApiResponse{
 		Messages: messages,
 	}
 
-	return &fiber.Map{
-		"data": data,
-	}
+	return data
 }

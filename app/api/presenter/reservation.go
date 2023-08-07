@@ -4,8 +4,8 @@ import (
 	"app/pkg/enum"
 	"app/pkg/usecaseoutputs"
 	"app/pkg/utils"
-	"github.com/gofiber/fiber/v2"
 	"github.com/volatiletech/null/v8"
+	"net/url"
 )
 
 type Reservation struct {
@@ -39,7 +39,7 @@ type CreateReservation struct {
 	Content           string `json:"content"`
 }
 
-func GetReservationsResponse(data *[]usecaseoutputs.Reservation) *fiber.Map {
+func GetReservationsResponse(data *[]usecaseoutputs.Reservation) ApiResponse {
 	reservations := make([]Reservation, 0)
 	for _, t := range *data {
 		reservation := Reservation{
@@ -55,36 +55,38 @@ func GetReservationsResponse(data *[]usecaseoutputs.Reservation) *fiber.Map {
 			Status:               enum.ReservationStatusNames[enum.ReservationStatus(t.Status)],
 			ArrivalFlag:          t.ArrivalFlag,
 			CancelType:           t.CancelType,
-			Content:              t.Content,
+			Content:              url.QueryEscape(t.Content),
 		}
 		reservations = append(reservations, reservation)
 	}
 
-	return &fiber.Map{
-		"data": reservations,
+	return ApiResponse{
+		Data:     reservations,
+		Messages: []string{},
 	}
 }
 
-func GetWaitTimeResponse(data *usecaseoutputs.WaitTime) *fiber.Map {
+func GetWaitTimeResponse(data *usecaseoutputs.WaitTime) ApiResponse {
 	waitTime := WaitTime{
 		ReservationNumber: data.ReservationNumber,
 		Position:          data.Position,
 		Time:              data.Time,
 	}
 
-	return &fiber.Map{
-		"data": waitTime,
+	return ApiResponse{
+		Data:     waitTime,
+		Messages: []string{},
 	}
 }
 
-func GetCreateReservationResponse(data *usecaseoutputs.CreateReservation, messages ...string) *fiber.Map {
+func GetCreateReservationResponse(data *usecaseoutputs.CreateReservation, messages ...string) ApiResponse {
 	encryptedStr := CreateReservation{
 		ReservationNumber: data.ReservationNumber,
-		Content:           data.Content,
+		Content:           url.QueryEscape(data.Content),
 	}
 
-	return &fiber.Map{
-		"data":     encryptedStr,
-		"messages": messages,
+	return ApiResponse{
+		Data:     encryptedStr,
+		Messages: messages,
 	}
 }
