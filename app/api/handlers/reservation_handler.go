@@ -7,8 +7,10 @@ import (
 	"app/pkg/core/usecase"
 	"app/pkg/usecaseinputs"
 	"context"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
+	"net/url"
 )
 
 // GetTodayReservations 店舗ごとの今日の予約一覧を取得する
@@ -44,14 +46,20 @@ func GetLineEndWaitTime(usecase usecase.ReservationUsecase) fiber.Handler {
 	}
 }
 
-// GetIndividualWaitTime 顧客ごとの現在の待ち時間を取得する
-func GetIndividualWaitTime(usecase usecase.ReservationUsecase) fiber.Handler {
+// GetMyWaitTime 顧客ごとの現在の待ち時間を取得する
+func GetMyWaitTime(usecase usecase.ReservationUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Create cancellable context.
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		fetched, err := usecase.FetchIndividualWaitTime(customContext, 2, 17)
+		encryptedText := c.Query("encryptedText", "")
+		decodedString, err := url.QueryUnescape(encryptedText)
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+
+		fetched, err := usecase.FetchMyWaitTime(customContext, 2, decodedString)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))

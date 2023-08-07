@@ -9,7 +9,7 @@ import (
 func ReservationRouter(app fiber.Router, usecase usecase.ReservationUsecase) {
 	app.Get("/reservations", handlers.GetTodayReservations(usecase))
 	app.Get("/lineEndWaitTime", handlers.GetLineEndWaitTime(usecase))
-	app.Get("/individualWaitTime", handlers.GetIndividualWaitTime(usecase))
+	app.Get("/myWaitTime", handlers.GetMyWaitTime(usecase))
 	app.Post("/reservation", handlers.CreateReservation(usecase))
 
 	// WebSocket
