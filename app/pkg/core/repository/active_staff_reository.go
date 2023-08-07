@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"app/api/errors"
 	"app/pkg/models"
 	"context"
 	"fmt"
@@ -24,5 +25,12 @@ func (r activeStaffRepository) ReadActiveStaffs(ctx context.Context, storeId int
 		qm.Where(fmt.Sprintf("%s = ?", models.ActiveStaffTableColumns.StoreID), storeId),
 	}
 
-	return models.ActiveStaffs(mods...).AllG(ctx)
+	result, err := models.ActiveStaffs(mods...).AllG(ctx)
+	if err != nil {
+		return nil, &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "ReadActiveStaffs",
+		}
+	}
+	return result, nil
 }

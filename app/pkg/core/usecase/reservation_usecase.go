@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"app/api/errors"
 	"app/pkg/constant"
 	"app/pkg/core/repository"
 	"app/pkg/enum"
@@ -16,7 +17,7 @@ import (
 type ReservationUsecase interface {
 	FetchAllReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error)
 	FetchLineEndWaitTime(ctx context.Context, storeId int) (*usecaseoutputs.WaitTime, error)
-	FetchIndividualWaitTime(ctx context.Context, storeId int, reservationId int) (*usecaseoutputs.WaitTime, error)
+	FetchMyWaitTime(ctx context.Context, storeId int, encryptedText string) (*usecaseoutputs.WaitTime, error)
 	CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) (*usecaseoutputs.CreateReservation, error)
 }
 
@@ -81,46 +82,33 @@ func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId in
 }
 
 func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId int) (*usecaseoutputs.WaitTime, error) {
-	// 本日の予約一覧を取得
-	reservations, err := u.reservationRepository.ReadTodayReservations(
-		ctx,
-		storeId,
-		enum.Waiting,    // 未案内
-		enum.InProgress, // 案内中
-	)
+	// 施術目安時間更新後の本日の予約一覧を取得する
+	reservations, err := u.fetchReservationsWithUpdateHandleTimes(ctx, storeId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read line end wait time: %w", err)
+		return nil, err
 	}
 
 	// 次の予約番号
 	nextReservationNumber, err := u.getNextReservationNumber(ctx, storeId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to line end wait time: %w", err)
+		return nil, err
 	}
 	// 次の順番
 	position := 1
 	// 現在の待ち時間
 	waitTime := 0
-	if len(*reservations) > 0 {
-		// 顧客ごとの過去履歴に紐づく施術時間一覧を取得する
-		handleTimes, err := u.reservationRepository.ReadHandleTimes(ctx, storeId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read line end wait time: %w", err)
-		}
 
-		// 予約一覧に対する施術時間を更新する
-		u.updateTimes(reservations, handleTimes)
-
-		// 施術中スタッフ一覧スタッフの対応可能時間を取得する
-		activeStaffs, err := u.activeStaffRepository.ReadActiveStaffs(ctx, storeId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read line end wait time: %w", err)
-		}
-		staffAvailableTimes := u.getStaffAvailableTimes(activeStaffs, reservations)
-
-		position = u.getNextPosition(reservations)
-		waitTime = calcWaitTime(*reservations, *staffAvailableTimes, len(*reservations))
+	// 施術中スタッフ一覧スタッフの対応可能時間を取得する
+	activeStaffs, err := u.activeStaffRepository.ReadActiveStaffs(ctx, storeId)
+	if err != nil {
+		return nil, err
 	}
+	staffAvailableTimes := u.getStaffAvailableTimes(activeStaffs, reservations)
+
+	// 案内待ちの予約数＋1番目の数を取得する
+	position = u.getNextPosition(reservations)
+	// 待ち時間を取得する
+	waitTime = calcWaitTime(*reservations, *staffAvailableTimes, len(*reservations))
 
 	return &usecaseoutputs.WaitTime{
 		ReservationNumber: nextReservationNumber,
@@ -129,37 +117,37 @@ func (u reservationUsecase) FetchLineEndWaitTime(ctx context.Context, storeId in
 	}, nil
 }
 
-func (u reservationUsecase) FetchIndividualWaitTime(ctx context.Context, storeId int, reservationId int) (*usecaseoutputs.WaitTime, error) {
-	// 予約一覧を取得
-	reservations, _ := u.reservationRepository.ReadTodayReservations(
-		ctx,
-		storeId,
-		enum.Waiting,
-		enum.InProgress,
-	)
+func (u reservationUsecase) FetchMyWaitTime(ctx context.Context, storeId int, encryptedText string) (*usecaseoutputs.WaitTime, error) {
+	// 暗号化文字列を復号化する
+	reservationInfo, err := u.decryptReservation(encryptedText)
+	if err != nil {
+		return nil, &errors.UnexpectedError{
+			InternalError: err,
+			Operation:     "decryptReservation",
+		}
+	}
 
-	// 順番
-	var position int
-	// 予約番号
-	var reservationNumber int
+	// 施術目安時間更新後の本日の予約一覧を取得する
+	reservations, err := u.fetchReservationsWithUpdateHandleTimes(ctx, storeId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 順番、予約番号
+	var position, reservationNumber int
 	// 予約IDに紐づく予約が何番目か特定する
 	for i, rs := range *reservations {
-		if rs.ReservationID == reservationId {
+		if rs.ReservationID == reservationInfo.ReservationID {
 			position = i + 1
 			reservationNumber = rs.ReservationNumber
 		}
 	}
 
-	// 顧客ごとの過去履歴に紐づく施術時間一覧を取得する
-	handleTimes, _ := u.reservationRepository.ReadHandleTimes(ctx, storeId)
-
-	// 予約一覧に対する施術時間を更新する
-	u.updateTimes(reservations, handleTimes)
-
 	// 施術中スタッフ一覧スタッフの対応可能時間を取得する
 	activeStaffs, _ := u.activeStaffRepository.ReadActiveStaffs(ctx, storeId)
 	staffAvailableTimes := u.getStaffAvailableTimes(activeStaffs, reservations)
 
+	// 待ち時間を取得する
 	waitTime := calcWaitTime(*reservations, *staffAvailableTimes, position)
 
 	return &usecaseoutputs.WaitTime{
@@ -173,7 +161,10 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	// トランザクション開始する
 	tx, err := boil.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, &errors.UnexpectedError{
+			InternalError: err,
+			Operation:     "Begin Tx",
+		}
 	}
 	// トランザクションをcontextに紐づける
 	ctxWithTx := context.WithValue(ctx, constant.ContextExecutorKey, tx)
@@ -188,7 +179,7 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	// 次の予約番号を取得する
 	nextReservationNumber, err := u.getNextReservationNumber(ctxWithTx, input.StoreID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create reservation: %w", err)
+		return nil, err
 	}
 
 	// 予約を登録する
@@ -201,7 +192,7 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	}
 	reservation, err := u.reservationRepository.InsertReservation(ctxWithTx, cRes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create reservation: %w", err)
+		return nil, err
 	}
 
 	// 予約メニューを登録する
@@ -212,13 +203,16 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	}
 	err = u.reservationMenuRepository.InsertReservationMenu(ctx, cResMn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create reservation: %w", err)
+		return nil, err
 	}
 
 	// トランザクションをコミットする
 	err = tx.Commit()
 	if err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+		return nil, &errors.UnexpectedError{
+			InternalError: err,
+			Operation:     "Commit Tx",
+		}
 	}
 
 	// 予約追加の通知をブロードキャストする
@@ -227,7 +221,10 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	// 予約を特定する暗号化した文字列を生成する
 	encryptedText, err := u.encryptReservation(reservation.ReservationID, reservation.StoreID, reservation.ReservedDatetime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt reservation: %w", err)
+		return nil, &errors.UnexpectedError{
+			InternalError: err,
+			Operation:     "encryptReservation",
+		}
 	}
 
 	output := &usecaseoutputs.CreateReservation{

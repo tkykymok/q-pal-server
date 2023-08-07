@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"app/api/errors"
 	"app/pkg/models"
 	"context"
-	"fmt"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -21,7 +21,10 @@ func NewReservationMenuRepo() ReservationMenuRepository {
 func (r reservationMenuRepository) InsertReservationMenu(ctx context.Context, reservationMenu *models.ReservationMenu) error {
 	err := reservationMenu.InsertG(ctx, boil.Infer())
 	if err != nil {
-		return fmt.Errorf("failed to Insert reservation menu: %w", err)
+		return &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "InsertReservationMenu",
+		}
 	}
 	return nil
 }

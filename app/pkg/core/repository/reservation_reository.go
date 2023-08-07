@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"app/api/errors"
 	"app/pkg/constant"
 	"app/pkg/enum"
 	"app/pkg/exmodels"
@@ -83,7 +84,10 @@ func (r reservationRepository) ReadTodayReservations(ctx context.Context, storeI
 	var result []exmodels.ReservationWithRelated
 	err := models.Reservations(mods...).BindG(ctx, &result)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read  reservation with related: %w", err)
+		return nil, &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "ReadTodayReservations",
+		}
 	}
 
 	return &result, nil
@@ -99,18 +103,23 @@ func (r reservationRepository) ReadLatestReservation(ctx context.Context, storeI
 		qm.Limit(1),
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
-
+	// トランザクションが存在する場合のみ、タイムアウトを設定
 	if ctx.Value(constant.ContextExecutorKey) != nil {
-		// トランザクションあり
 		mods = append(mods, qm.For("update"))
-		//mods = append([]qm.QueryMod{qm.SQL("FOR UPDATE")}, mods...)
-		return models.Reservations(mods...).AllG(ctxWithTimeout)
-	} else {
-		// トランザクションなし
-		return models.Reservations(mods...).AllG(ctx)
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
 	}
+
+	result, err := models.Reservations(mods...).AllG(ctx)
+	if err != nil {
+		return nil, &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "ReadLatestReservation",
+		}
+	}
+
+	return result, nil
 }
 
 // ReadHandleTimes 店舗に紐づく、顧客＆メニューごとの施術時間一覧を取得する
@@ -147,17 +156,22 @@ func (r reservationRepository) ReadHandleTimes(ctx context.Context, storeId int)
 	var result []exmodels.HandleTime
 	err := models.Reservations(mods...).BindG(ctx, &result)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read handle time: %w", err)
+		return nil, &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "ReadHandleTimes",
+		}
 	}
 
 	return &result, nil
 }
 
 func (r reservationRepository) InsertReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error) {
-	// トランザクションなし
 	err := reservation.InsertG(ctx, boil.Infer())
 	if err != nil {
-		return nil, fmt.Errorf("failed to Insert reservation: %w", err)
+		return nil, &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "InsertReservation",
+		}
 	}
 
 	return reservation, nil

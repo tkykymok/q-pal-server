@@ -15,6 +15,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/friendsofgo/errors"
 	"github.com/volatiletech/null/v8"
 	"io"
 	"time"
@@ -147,13 +148,38 @@ func calcDiffTime(t null.Time) int {
 	return 0
 }
 
+// 施術目安時間更新後の本日の予約一覧を取得する
+func (u reservationUsecase) fetchReservationsWithUpdateHandleTimes(ctx context.Context, storeId int) (*[]exmodels.ReservationWithRelated, error) {
+	// 本日の予約一覧を取得
+	reservations, err := u.reservationRepository.ReadTodayReservations(
+		ctx,
+		storeId,
+		enum.Waiting,    // 未案内
+		enum.InProgress, // 案内中
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// 顧客ごとの過去履歴に紐づく施術時間一覧を取得する
+	handleTimes, err := u.reservationRepository.ReadHandleTimes(ctx, storeId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 予約一覧に対する施術時間を更新する
+	u.updateTimes(reservations, handleTimes)
+
+	return reservations, nil
+}
+
 // 店舗に紐づく最新予約番号を取得する
 func (u reservationUsecase) getNextReservationNumber(ctx context.Context, storeId int) (int, error) {
 	reservationNumber := 1 // 初期値
 	// 全ステータスの予約一覧を取得
 	reservations, err := u.reservationRepository.ReadLatestReservation(ctx, storeId)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get next reservation number: %w", err)
+		return 0, err
 	}
 	// 検索結果が存在する場合
 	if reservations != nil {
@@ -224,6 +250,10 @@ func (u reservationUsecase) encryptReservation(reservationId int, storeId int, r
 }
 
 func (u reservationUsecase) decryptReservation(ciphertextStr string) (*usecaseoutputs.ReservationIdentifyKey, error) {
+	if len(ciphertextStr) == 0 {
+		return nil, errors.New("Invalid parameter")
+	}
+
 	// 暗号化キーを設定します。
 	encryptKey := "pass1234pass1234"
 
