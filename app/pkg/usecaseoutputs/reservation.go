@@ -2,6 +2,7 @@ package usecaseoutputs
 
 import (
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"time"
 )
 
@@ -18,6 +19,9 @@ type Reservation struct {
 	Status               int
 	ArrivalFlag          bool
 	CancelType           null.Int
+	MenuID               int
+	MenuName             null.String
+	Price                types.NullDecimal
 	Content              string
 }
 

@@ -5,23 +5,27 @@ import (
 	"app/pkg/usecaseoutputs"
 	"app/pkg/utils"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"net/url"
 )
 
 type Reservation struct {
-	ReservationID        int      `json:"reservationId" `
-	CustomerID           int      `json:"customerId" `
-	StoreID              int      `json:"storeId" `
-	StaffID              null.Int `json:"staffId" `
-	ReservationNumber    int      `json:"reservationNumber" `
-	ReservedDatetime     string   `json:"reservedDatetime" `
-	HoldStartDatetime    string   `json:"holdStartDatetime" `
-	ServiceStartDatetime string   `json:"serviceStartDatetime" `
-	ServiceEndDatetime   string   `json:"serviceEndDatetime" `
-	Status               string   `json:"status" `
-	ArrivalFlag          bool     `json:"arrivalFlag" `
-	CancelType           null.Int `json:"cancelType" `
-	Content              string   `json:"content" `
+	ReservationID        int               `json:"reservationId" `
+	CustomerID           int               `json:"customerId" `
+	StoreID              int               `json:"storeId" `
+	StaffID              null.Int          `json:"staffId" `
+	ReservationNumber    int               `json:"reservationNumber" `
+	ReservedDatetime     string            `json:"reservedDatetime" `
+	HoldStartDatetime    string            `json:"holdStartDatetime" `
+	ServiceStartDatetime string            `json:"serviceStartDatetime" `
+	ServiceEndDatetime   string            `json:"serviceEndDatetime" `
+	Status               string            `json:"status" `
+	ArrivalFlag          bool              `json:"arrivalFlag" `
+	CancelType           null.Int          `json:"cancelType" `
+	MenuID               int               `json:"menuId" `
+	MenuName             string            `json:"menuName" `
+	Price                types.NullDecimal `json:"price" `
+	Content              string            `json:"content" `
 }
 
 type WaitTime struct {
@@ -55,6 +59,9 @@ func GetReservationsResponse(data *[]usecaseoutputs.Reservation) ApiResponse {
 			Status:               enum.ReservationStatusNames[enum.ReservationStatus(t.Status)],
 			ArrivalFlag:          t.ArrivalFlag,
 			CancelType:           t.CancelType,
+			MenuID:               t.MenuID,
+			MenuName:             utils.CheckString(t.MenuName),
+			Price:                t.Price,
 			Content:              url.QueryEscape(t.Content),
 		}
 		reservations = append(reservations, reservation)

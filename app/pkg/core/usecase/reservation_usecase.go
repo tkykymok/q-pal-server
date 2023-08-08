@@ -9,7 +9,6 @@ import (
 	"app/pkg/usecaseinputs"
 	"app/pkg/usecaseoutputs"
 	"context"
-	"fmt"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"time"
 )
@@ -51,14 +50,17 @@ func (u reservationUsecase) FetchTodayReservations(ctx context.Context, storeId 
 		enum.Canceled,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to Fetch all reservations: %w", err)
+		return nil, err
 	}
 
 	for _, t := range *result {
 		// 予約を特定する暗号化した文字列を生成する
 		encryptedText, err := u.encryptReservation(t.ReservationID, t.StoreID, t.ReservedDatetime)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encrypt reservation: %w", err)
+			return nil, &errors.UnexpectedError{
+				InternalError: err,
+				Operation:     "encryptReservation",
+			}
 		}
 		reservation := usecaseoutputs.Reservation{
 			ReservationID:        t.ReservationID,
