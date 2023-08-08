@@ -15,7 +15,7 @@ import (
 )
 
 type ReservationUsecase interface {
-	FetchAllReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error)
+	FetchTodayReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error)
 	FetchLineEndWaitTime(ctx context.Context, storeId int) (*usecaseoutputs.WaitTime, error)
 	FetchMyWaitTime(ctx context.Context, storeId int, encryptedText string) (*usecaseoutputs.WaitTime, error)
 	CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) (*usecaseoutputs.CreateReservation, error)
@@ -39,7 +39,7 @@ func NewReservationUsecase(
 	}
 }
 
-func (u reservationUsecase) FetchAllReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error) {
+func (u reservationUsecase) FetchTodayReservations(ctx context.Context, storeId int) (*[]usecaseoutputs.Reservation, error) {
 	reservations := make([]usecaseoutputs.Reservation, 0)
 	result, err := u.reservationRepository.ReadTodayReservations(
 		ctx,

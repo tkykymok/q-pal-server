@@ -20,7 +20,7 @@ func GetTodayReservations(usecase usecase.ReservationUsecase) fiber.Handler {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		fetched, err := usecase.FetchAllReservations(customContext, 2)
+		fetched, err := usecase.FetchTodayReservations(customContext, 2)
 
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
