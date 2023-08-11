@@ -30,6 +30,12 @@ type Notification struct {
 	NotificationType    null.Int    `boil:"notification_type" json:"notification_type,omitempty" toml:"notification_type" yaml:"notification_type,omitempty"`
 	NotificationContent null.String `boil:"notification_content" json:"notification_content,omitempty" toml:"notification_content" yaml:"notification_content,omitempty"`
 	NotificationStatus  null.Int    `boil:"notification_status" json:"notification_status,omitempty" toml:"notification_status" yaml:"notification_status,omitempty"`
+	CreatedAt           time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt           time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy           null.Int    `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType       string      `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy           null.Int    `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType       string      `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *notificationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L notificationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +48,12 @@ var NotificationColumns = struct {
 	NotificationType    string
 	NotificationContent string
 	NotificationStatus  string
+	CreatedAt           string
+	UpdatedAt           string
+	CreatedBy           string
+	CreatedByType       string
+	UpdatedBy           string
+	UpdatedByType       string
 }{
 	NotificationID:      "notification_id",
 	CustomerID:          "customer_id",
@@ -49,6 +61,12 @@ var NotificationColumns = struct {
 	NotificationType:    "notification_type",
 	NotificationContent: "notification_content",
 	NotificationStatus:  "notification_status",
+	CreatedAt:           "created_at",
+	UpdatedAt:           "updated_at",
+	CreatedBy:           "created_by",
+	CreatedByType:       "created_by_type",
+	UpdatedBy:           "updated_by",
+	UpdatedByType:       "updated_by_type",
 }
 
 var NotificationTableColumns = struct {
@@ -58,6 +76,12 @@ var NotificationTableColumns = struct {
 	NotificationType    string
 	NotificationContent string
 	NotificationStatus  string
+	CreatedAt           string
+	UpdatedAt           string
+	CreatedBy           string
+	CreatedByType       string
+	UpdatedBy           string
+	UpdatedByType       string
 }{
 	NotificationID:      "notifications.notification_id",
 	CustomerID:          "notifications.customer_id",
@@ -65,6 +89,12 @@ var NotificationTableColumns = struct {
 	NotificationType:    "notifications.notification_type",
 	NotificationContent: "notifications.notification_content",
 	NotificationStatus:  "notifications.notification_status",
+	CreatedAt:           "notifications.created_at",
+	UpdatedAt:           "notifications.updated_at",
+	CreatedBy:           "notifications.created_by",
+	CreatedByType:       "notifications.created_by_type",
+	UpdatedBy:           "notifications.updated_by",
+	UpdatedByType:       "notifications.updated_by_type",
 }
 
 // Generated where
@@ -76,6 +106,12 @@ var NotificationWhere = struct {
 	NotificationType    whereHelpernull_Int
 	NotificationContent whereHelpernull_String
 	NotificationStatus  whereHelpernull_Int
+	CreatedAt           whereHelpertime_Time
+	UpdatedAt           whereHelpertime_Time
+	CreatedBy           whereHelpernull_Int
+	CreatedByType       whereHelperstring
+	UpdatedBy           whereHelpernull_Int
+	UpdatedByType       whereHelperstring
 }{
 	NotificationID:      whereHelperint{field: "`notifications`.`notification_id`"},
 	CustomerID:          whereHelpernull_Int{field: "`notifications`.`customer_id`"},
@@ -83,6 +119,12 @@ var NotificationWhere = struct {
 	NotificationType:    whereHelpernull_Int{field: "`notifications`.`notification_type`"},
 	NotificationContent: whereHelpernull_String{field: "`notifications`.`notification_content`"},
 	NotificationStatus:  whereHelpernull_Int{field: "`notifications`.`notification_status`"},
+	CreatedAt:           whereHelpertime_Time{field: "`notifications`.`created_at`"},
+	UpdatedAt:           whereHelpertime_Time{field: "`notifications`.`updated_at`"},
+	CreatedBy:           whereHelpernull_Int{field: "`notifications`.`created_by`"},
+	CreatedByType:       whereHelperstring{field: "`notifications`.`created_by_type`"},
+	UpdatedBy:           whereHelpernull_Int{field: "`notifications`.`updated_by`"},
+	UpdatedByType:       whereHelperstring{field: "`notifications`.`updated_by_type`"},
 }
 
 // NotificationRels is where relationship names are stored.
@@ -123,9 +165,9 @@ func (r *notificationR) GetReservation() *Reservation {
 type notificationL struct{}
 
 var (
-	notificationAllColumns            = []string{"notification_id", "customer_id", "reservation_id", "notification_type", "notification_content", "notification_status"}
+	notificationAllColumns            = []string{"notification_id", "customer_id", "reservation_id", "notification_type", "notification_content", "notification_status", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	notificationColumnsWithoutDefault = []string{"notification_id", "customer_id", "reservation_id", "notification_type", "notification_content", "notification_status"}
-	notificationColumnsWithDefault    = []string{}
+	notificationColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	notificationPrimaryKeyColumns     = []string{"notification_id"}
 	notificationGeneratedColumns      = []string{}
 )
@@ -949,6 +991,16 @@ func (o *Notification) Insert(ctx context.Context, exec boil.ContextExecutor, co
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -1046,6 +1098,12 @@ func (o *Notification) UpdateG(ctx context.Context, columns boil.Columns) (int64
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Notification) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -1194,6 +1252,14 @@ var mySQLNotificationUniqueColumns = []string{
 func (o *Notification) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no notifications provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

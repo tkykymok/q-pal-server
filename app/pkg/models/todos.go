@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,88 +24,100 @@ import (
 
 // Todo is an object representing the database table.
 type Todo struct {
-	ID        int       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Title     string    `boil:"title" json:"title" toml:"title" yaml:"title"`
-	Completed bool      `boil:"completed" json:"completed" toml:"completed" yaml:"completed"`
-	UserId    int       `boil:"userId" json:"userId" toml:"userId" yaml:"userId"`
-	Deleted   bool      `boil:"deleted" json:"deleted" toml:"deleted" yaml:"deleted"`
-	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID            int       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Title         string    `boil:"title" json:"title" toml:"title" yaml:"title"`
+	Completed     bool      `boil:"completed" json:"completed" toml:"completed" yaml:"completed"`
+	UserId        int       `boil:"userId" json:"userId" toml:"userId" yaml:"userId"`
+	Deleted       bool      `boil:"deleted" json:"deleted" toml:"deleted" yaml:"deleted"`
+	CreatedAt     time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int  `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string    `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int  `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string    `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *todoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L todoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var TodoColumns = struct {
-	ID        string
-	Title     string
-	Completed string
-	UserId    string
-	Deleted   string
-	CreatedAt string
+	ID            string
+	Title         string
+	Completed     string
+	UserId        string
+	Deleted       string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	ID:        "id",
-	Title:     "title",
-	Completed: "completed",
-	UserId:    "userId",
-	Deleted:   "deleted",
-	CreatedAt: "created_at",
+	ID:            "id",
+	Title:         "title",
+	Completed:     "completed",
+	UserId:        "userId",
+	Deleted:       "deleted",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var TodoTableColumns = struct {
-	ID        string
-	Title     string
-	Completed string
-	UserId    string
-	Deleted   string
-	CreatedAt string
+	ID            string
+	Title         string
+	Completed     string
+	UserId        string
+	Deleted       string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	ID:        "todos.id",
-	Title:     "todos.title",
-	Completed: "todos.completed",
-	UserId:    "todos.userId",
-	Deleted:   "todos.deleted",
-	CreatedAt: "todos.created_at",
+	ID:            "todos.id",
+	Title:         "todos.title",
+	Completed:     "todos.completed",
+	UserId:        "todos.userId",
+	Deleted:       "todos.deleted",
+	CreatedAt:     "todos.created_at",
+	UpdatedAt:     "todos.updated_at",
+	CreatedBy:     "todos.created_by",
+	CreatedByType: "todos.created_by_type",
+	UpdatedBy:     "todos.updated_by",
+	UpdatedByType: "todos.updated_by_type",
 }
 
 // Generated where
 
-type whereHelperstring struct{ field string }
-
-func (w whereHelperstring) EQ(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperstring) NEQ(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperstring) LT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperstring) LTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperstring) GT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperstring) GTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperstring) IN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
 var TodoWhere = struct {
-	ID        whereHelperint
-	Title     whereHelperstring
-	Completed whereHelperbool
-	UserId    whereHelperint
-	Deleted   whereHelperbool
-	CreatedAt whereHelpertime_Time
+	ID            whereHelperint
+	Title         whereHelperstring
+	Completed     whereHelperbool
+	UserId        whereHelperint
+	Deleted       whereHelperbool
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
-	ID:        whereHelperint{field: "`todos`.`id`"},
-	Title:     whereHelperstring{field: "`todos`.`title`"},
-	Completed: whereHelperbool{field: "`todos`.`completed`"},
-	UserId:    whereHelperint{field: "`todos`.`userId`"},
-	Deleted:   whereHelperbool{field: "`todos`.`deleted`"},
-	CreatedAt: whereHelpertime_Time{field: "`todos`.`created_at`"},
+	ID:            whereHelperint{field: "`todos`.`id`"},
+	Title:         whereHelperstring{field: "`todos`.`title`"},
+	Completed:     whereHelperbool{field: "`todos`.`completed`"},
+	UserId:        whereHelperint{field: "`todos`.`userId`"},
+	Deleted:       whereHelperbool{field: "`todos`.`deleted`"},
+	CreatedAt:     whereHelpertime_Time{field: "`todos`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`todos`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`todos`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`todos`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`todos`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`todos`.`updated_by_type`"},
 }
 
 // TodoRels is where relationship names are stored.
@@ -124,9 +137,9 @@ func (*todoR) NewStruct() *todoR {
 type todoL struct{}
 
 var (
-	todoAllColumns            = []string{"id", "title", "completed", "userId", "deleted", "created_at"}
-	todoColumnsWithoutDefault = []string{"title", "userId", "created_at"}
-	todoColumnsWithDefault    = []string{"id", "completed", "deleted"}
+	todoAllColumns            = []string{"id", "title", "completed", "userId", "deleted", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
+	todoColumnsWithoutDefault = []string{"title", "userId"}
+	todoColumnsWithDefault    = []string{"id", "completed", "deleted", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	todoPrimaryKeyColumns     = []string{"id"}
 	todoGeneratedColumns      = []string{}
 )
@@ -494,6 +507,9 @@ func (o *Todo) Insert(ctx context.Context, exec boil.ContextExecutor, columns bo
 		if o.CreatedAt.IsZero() {
 			o.CreatedAt = currTime
 		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
 	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
@@ -603,6 +619,12 @@ func (o *Todo) UpdateG(ctx context.Context, columns boil.Columns) (int64, error)
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Todo) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -758,6 +780,7 @@ func (o *Todo) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColu
 		if o.CreatedAt.IsZero() {
 			o.CreatedAt = currTime
 		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

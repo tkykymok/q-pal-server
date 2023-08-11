@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,9 +24,15 @@ import (
 
 // ReservationMenu is an object representing the database table.
 type ReservationMenu struct {
-	ReservationID int `boil:"reservation_id" json:"reservation_id" toml:"reservation_id" yaml:"reservation_id"`
-	StoreID       int `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
-	MenuID        int `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
+	ReservationID int       `boil:"reservation_id" json:"reservation_id" toml:"reservation_id" yaml:"reservation_id"`
+	StoreID       int       `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
+	MenuID        int       `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
+	CreatedAt     time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int  `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string    `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int  `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string    `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *reservationMenuR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L reservationMenuL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -35,20 +42,44 @@ var ReservationMenuColumns = struct {
 	ReservationID string
 	StoreID       string
 	MenuID        string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
 	ReservationID: "reservation_id",
 	StoreID:       "store_id",
 	MenuID:        "menu_id",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var ReservationMenuTableColumns = struct {
 	ReservationID string
 	StoreID       string
 	MenuID        string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
 	ReservationID: "reservation_menus.reservation_id",
 	StoreID:       "reservation_menus.store_id",
 	MenuID:        "reservation_menus.menu_id",
+	CreatedAt:     "reservation_menus.created_at",
+	UpdatedAt:     "reservation_menus.updated_at",
+	CreatedBy:     "reservation_menus.created_by",
+	CreatedByType: "reservation_menus.created_by_type",
+	UpdatedBy:     "reservation_menus.updated_by",
+	UpdatedByType: "reservation_menus.updated_by_type",
 }
 
 // Generated where
@@ -57,10 +88,22 @@ var ReservationMenuWhere = struct {
 	ReservationID whereHelperint
 	StoreID       whereHelperint
 	MenuID        whereHelperint
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
 	ReservationID: whereHelperint{field: "`reservation_menus`.`reservation_id`"},
 	StoreID:       whereHelperint{field: "`reservation_menus`.`store_id`"},
 	MenuID:        whereHelperint{field: "`reservation_menus`.`menu_id`"},
+	CreatedAt:     whereHelpertime_Time{field: "`reservation_menus`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`reservation_menus`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`reservation_menus`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`reservation_menus`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`reservation_menus`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`reservation_menus`.`updated_by_type`"},
 }
 
 // ReservationMenuRels is where relationship names are stored.
@@ -101,9 +144,9 @@ func (r *reservationMenuR) GetReservation() *Reservation {
 type reservationMenuL struct{}
 
 var (
-	reservationMenuAllColumns            = []string{"reservation_id", "store_id", "menu_id"}
+	reservationMenuAllColumns            = []string{"reservation_id", "store_id", "menu_id", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	reservationMenuColumnsWithoutDefault = []string{"reservation_id", "store_id", "menu_id"}
-	reservationMenuColumnsWithDefault    = []string{}
+	reservationMenuColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	reservationMenuPrimaryKeyColumns     = []string{"reservation_id", "store_id", "menu_id"}
 	reservationMenuGeneratedColumns      = []string{}
 )
@@ -837,6 +880,16 @@ func (o *ReservationMenu) Insert(ctx context.Context, exec boil.ContextExecutor,
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -936,6 +989,12 @@ func (o *ReservationMenu) UpdateG(ctx context.Context, columns boil.Columns) (in
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *ReservationMenu) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -1082,6 +1141,14 @@ var mySQLReservationMenuUniqueColumns = []string{}
 func (o *ReservationMenu) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no reservation_menus provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

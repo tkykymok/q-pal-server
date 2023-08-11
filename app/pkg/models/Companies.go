@@ -24,27 +24,57 @@ import (
 
 // Company is an object representing the database table.
 type Company struct {
-	CompanyID   int         `boil:"company_id" json:"company_id" toml:"company_id" yaml:"company_id"`
-	CompanyName null.String `boil:"company_name" json:"company_name,omitempty" toml:"company_name" yaml:"company_name,omitempty"`
+	CompanyID     int         `boil:"company_id" json:"company_id" toml:"company_id" yaml:"company_id"`
+	CompanyName   null.String `boil:"company_name" json:"company_name,omitempty" toml:"company_name" yaml:"company_name,omitempty"`
+	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int    `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string      `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int    `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string      `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *companyR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L companyL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var CompanyColumns = struct {
-	CompanyID   string
-	CompanyName string
+	CompanyID     string
+	CompanyName   string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	CompanyID:   "company_id",
-	CompanyName: "company_name",
+	CompanyID:     "company_id",
+	CompanyName:   "company_name",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var CompanyTableColumns = struct {
-	CompanyID   string
-	CompanyName string
+	CompanyID     string
+	CompanyName   string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	CompanyID:   "companies.company_id",
-	CompanyName: "companies.company_name",
+	CompanyID:     "companies.company_id",
+	CompanyName:   "companies.company_name",
+	CreatedAt:     "companies.created_at",
+	UpdatedAt:     "companies.updated_at",
+	CreatedBy:     "companies.created_by",
+	CreatedByType: "companies.created_by_type",
+	UpdatedBy:     "companies.updated_by",
+	UpdatedByType: "companies.updated_by_type",
 }
 
 // Generated where
@@ -88,11 +118,23 @@ func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereI
 func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var CompanyWhere = struct {
-	CompanyID   whereHelperint
-	CompanyName whereHelpernull_String
+	CompanyID     whereHelperint
+	CompanyName   whereHelpernull_String
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
-	CompanyID:   whereHelperint{field: "`companies`.`company_id`"},
-	CompanyName: whereHelpernull_String{field: "`companies`.`company_name`"},
+	CompanyID:     whereHelperint{field: "`companies`.`company_id`"},
+	CompanyName:   whereHelpernull_String{field: "`companies`.`company_name`"},
+	CreatedAt:     whereHelpertime_Time{field: "`companies`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`companies`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`companies`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`companies`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`companies`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`companies`.`updated_by_type`"},
 }
 
 // CompanyRels is where relationship names are stored.
@@ -123,9 +165,9 @@ func (r *companyR) GetStores() StoreSlice {
 type companyL struct{}
 
 var (
-	companyAllColumns            = []string{"company_id", "company_name"}
+	companyAllColumns            = []string{"company_id", "company_name", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	companyColumnsWithoutDefault = []string{"company_id", "company_name"}
-	companyColumnsWithDefault    = []string{}
+	companyColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	companyPrimaryKeyColumns     = []string{"company_id"}
 	companyGeneratedColumns      = []string{}
 )
@@ -770,6 +812,16 @@ func (o *Company) Insert(ctx context.Context, exec boil.ContextExecutor, columns
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -867,6 +919,12 @@ func (o *Company) UpdateG(ctx context.Context, columns boil.Columns) (int64, err
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Company) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -1015,6 +1073,14 @@ var mySQLCompanyUniqueColumns = []string{
 func (o *Company) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no companies provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

@@ -25,37 +25,67 @@ import (
 
 // MenuSet is an object representing the database table.
 type MenuSet struct {
-	SetID    int               `boil:"set_id" json:"set_id" toml:"set_id" yaml:"set_id"`
-	StoreID  null.Int          `boil:"store_id" json:"store_id,omitempty" toml:"store_id" yaml:"store_id,omitempty"`
-	SetName  null.String       `boil:"set_name" json:"set_name,omitempty" toml:"set_name" yaml:"set_name,omitempty"`
-	SetPrice types.NullDecimal `boil:"set_price" json:"set_price,omitempty" toml:"set_price" yaml:"set_price,omitempty"`
+	SetID         int               `boil:"set_id" json:"set_id" toml:"set_id" yaml:"set_id"`
+	StoreID       null.Int          `boil:"store_id" json:"store_id,omitempty" toml:"store_id" yaml:"store_id,omitempty"`
+	SetName       null.String       `boil:"set_name" json:"set_name,omitempty" toml:"set_name" yaml:"set_name,omitempty"`
+	SetPrice      types.NullDecimal `boil:"set_price" json:"set_price,omitempty" toml:"set_price" yaml:"set_price,omitempty"`
+	CreatedAt     time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time         `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int          `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string            `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int          `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string            `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *menuSetR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L menuSetL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MenuSetColumns = struct {
-	SetID    string
-	StoreID  string
-	SetName  string
-	SetPrice string
+	SetID         string
+	StoreID       string
+	SetName       string
+	SetPrice      string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	SetID:    "set_id",
-	StoreID:  "store_id",
-	SetName:  "set_name",
-	SetPrice: "set_price",
+	SetID:         "set_id",
+	StoreID:       "store_id",
+	SetName:       "set_name",
+	SetPrice:      "set_price",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var MenuSetTableColumns = struct {
-	SetID    string
-	StoreID  string
-	SetName  string
-	SetPrice string
+	SetID         string
+	StoreID       string
+	SetName       string
+	SetPrice      string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	SetID:    "menu_sets.set_id",
-	StoreID:  "menu_sets.store_id",
-	SetName:  "menu_sets.set_name",
-	SetPrice: "menu_sets.set_price",
+	SetID:         "menu_sets.set_id",
+	StoreID:       "menu_sets.store_id",
+	SetName:       "menu_sets.set_name",
+	SetPrice:      "menu_sets.set_price",
+	CreatedAt:     "menu_sets.created_at",
+	UpdatedAt:     "menu_sets.updated_at",
+	CreatedBy:     "menu_sets.created_by",
+	CreatedByType: "menu_sets.created_by_type",
+	UpdatedBy:     "menu_sets.updated_by",
+	UpdatedByType: "menu_sets.updated_by_type",
 }
 
 // Generated where
@@ -87,15 +117,27 @@ func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
 }
 
 var MenuSetWhere = struct {
-	SetID    whereHelperint
-	StoreID  whereHelpernull_Int
-	SetName  whereHelpernull_String
-	SetPrice whereHelpertypes_NullDecimal
+	SetID         whereHelperint
+	StoreID       whereHelpernull_Int
+	SetName       whereHelpernull_String
+	SetPrice      whereHelpertypes_NullDecimal
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
-	SetID:    whereHelperint{field: "`menu_sets`.`set_id`"},
-	StoreID:  whereHelpernull_Int{field: "`menu_sets`.`store_id`"},
-	SetName:  whereHelpernull_String{field: "`menu_sets`.`set_name`"},
-	SetPrice: whereHelpertypes_NullDecimal{field: "`menu_sets`.`set_price`"},
+	SetID:         whereHelperint{field: "`menu_sets`.`set_id`"},
+	StoreID:       whereHelpernull_Int{field: "`menu_sets`.`store_id`"},
+	SetName:       whereHelpernull_String{field: "`menu_sets`.`set_name`"},
+	SetPrice:      whereHelpertypes_NullDecimal{field: "`menu_sets`.`set_price`"},
+	CreatedAt:     whereHelpertime_Time{field: "`menu_sets`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`menu_sets`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`menu_sets`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`menu_sets`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`menu_sets`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`menu_sets`.`updated_by_type`"},
 }
 
 // MenuSetRels is where relationship names are stored.
@@ -136,9 +178,9 @@ func (r *menuSetR) GetSetMenuSetDetails() MenuSetDetailSlice {
 type menuSetL struct{}
 
 var (
-	menuSetAllColumns            = []string{"set_id", "store_id", "set_name", "set_price"}
+	menuSetAllColumns            = []string{"set_id", "store_id", "set_name", "set_price", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	menuSetColumnsWithoutDefault = []string{"set_id", "store_id", "set_name", "set_price"}
-	menuSetColumnsWithDefault    = []string{}
+	menuSetColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	menuSetPrimaryKeyColumns     = []string{"set_id"}
 	menuSetGeneratedColumns      = []string{}
 )
@@ -921,6 +963,16 @@ func (o *MenuSet) Insert(ctx context.Context, exec boil.ContextExecutor, columns
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -1018,6 +1070,12 @@ func (o *MenuSet) UpdateG(ctx context.Context, columns boil.Columns) (int64, err
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *MenuSet) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -1166,6 +1224,14 @@ var mySQLMenuSetUniqueColumns = []string{
 func (o *MenuSet) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no menu_sets provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

@@ -30,6 +30,12 @@ type Store struct {
 	Address       null.String `boil:"address" json:"address,omitempty" toml:"address" yaml:"address,omitempty"`
 	PhoneNumber   null.String `boil:"phone_number" json:"phone_number,omitempty" toml:"phone_number" yaml:"phone_number,omitempty"`
 	BusinessHours null.String `boil:"business_hours" json:"business_hours,omitempty" toml:"business_hours" yaml:"business_hours,omitempty"`
+	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int    `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string      `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int    `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string      `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *storeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L storeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +48,12 @@ var StoreColumns = struct {
 	Address       string
 	PhoneNumber   string
 	BusinessHours string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
 	StoreID:       "store_id",
 	CompanyID:     "company_id",
@@ -49,6 +61,12 @@ var StoreColumns = struct {
 	Address:       "address",
 	PhoneNumber:   "phone_number",
 	BusinessHours: "business_hours",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var StoreTableColumns = struct {
@@ -58,6 +76,12 @@ var StoreTableColumns = struct {
 	Address       string
 	PhoneNumber   string
 	BusinessHours string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
 	StoreID:       "stores.store_id",
 	CompanyID:     "stores.company_id",
@@ -65,6 +89,12 @@ var StoreTableColumns = struct {
 	Address:       "stores.address",
 	PhoneNumber:   "stores.phone_number",
 	BusinessHours: "stores.business_hours",
+	CreatedAt:     "stores.created_at",
+	UpdatedAt:     "stores.updated_at",
+	CreatedBy:     "stores.created_by",
+	CreatedByType: "stores.created_by_type",
+	UpdatedBy:     "stores.updated_by",
+	UpdatedByType: "stores.updated_by_type",
 }
 
 // Generated where
@@ -76,6 +106,12 @@ var StoreWhere = struct {
 	Address       whereHelpernull_String
 	PhoneNumber   whereHelpernull_String
 	BusinessHours whereHelpernull_String
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
 	StoreID:       whereHelperint{field: "`stores`.`store_id`"},
 	CompanyID:     whereHelpernull_Int{field: "`stores`.`company_id`"},
@@ -83,42 +119,48 @@ var StoreWhere = struct {
 	Address:       whereHelpernull_String{field: "`stores`.`address`"},
 	PhoneNumber:   whereHelpernull_String{field: "`stores`.`phone_number`"},
 	BusinessHours: whereHelpernull_String{field: "`stores`.`business_hours`"},
+	CreatedAt:     whereHelpertime_Time{field: "`stores`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`stores`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`stores`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`stores`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`stores`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`stores`.`updated_by_type`"},
 }
 
 // StoreRels is where relationship names are stored.
 var StoreRels = struct {
 	Company          string
 	ActiveStaffs     string
-	Customers        string
+	FavoriteStores   string
 	MenuSetDetails   string
 	MenuSets         string
 	Menus            string
 	ReservationMenus string
 	Reservations     string
-	Staffs           string
+	StoreStaffs      string
 }{
 	Company:          "Company",
 	ActiveStaffs:     "ActiveStaffs",
-	Customers:        "Customers",
+	FavoriteStores:   "FavoriteStores",
 	MenuSetDetails:   "MenuSetDetails",
 	MenuSets:         "MenuSets",
 	Menus:            "Menus",
 	ReservationMenus: "ReservationMenus",
 	Reservations:     "Reservations",
-	Staffs:           "Staffs",
+	StoreStaffs:      "StoreStaffs",
 }
 
 // storeR is where relationships are stored.
 type storeR struct {
 	Company          *Company             `boil:"Company" json:"Company" toml:"Company" yaml:"Company"`
 	ActiveStaffs     ActiveStaffSlice     `boil:"ActiveStaffs" json:"ActiveStaffs" toml:"ActiveStaffs" yaml:"ActiveStaffs"`
-	Customers        CustomerSlice        `boil:"Customers" json:"Customers" toml:"Customers" yaml:"Customers"`
+	FavoriteStores   FavoriteStoreSlice   `boil:"FavoriteStores" json:"FavoriteStores" toml:"FavoriteStores" yaml:"FavoriteStores"`
 	MenuSetDetails   MenuSetDetailSlice   `boil:"MenuSetDetails" json:"MenuSetDetails" toml:"MenuSetDetails" yaml:"MenuSetDetails"`
 	MenuSets         MenuSetSlice         `boil:"MenuSets" json:"MenuSets" toml:"MenuSets" yaml:"MenuSets"`
 	Menus            MenuSlice            `boil:"Menus" json:"Menus" toml:"Menus" yaml:"Menus"`
 	ReservationMenus ReservationMenuSlice `boil:"ReservationMenus" json:"ReservationMenus" toml:"ReservationMenus" yaml:"ReservationMenus"`
 	Reservations     ReservationSlice     `boil:"Reservations" json:"Reservations" toml:"Reservations" yaml:"Reservations"`
-	Staffs           StaffSlice           `boil:"Staffs" json:"Staffs" toml:"Staffs" yaml:"Staffs"`
+	StoreStaffs      StoreStaffSlice      `boil:"StoreStaffs" json:"StoreStaffs" toml:"StoreStaffs" yaml:"StoreStaffs"`
 }
 
 // NewStruct creates a new relationship struct
@@ -140,11 +182,11 @@ func (r *storeR) GetActiveStaffs() ActiveStaffSlice {
 	return r.ActiveStaffs
 }
 
-func (r *storeR) GetCustomers() CustomerSlice {
+func (r *storeR) GetFavoriteStores() FavoriteStoreSlice {
 	if r == nil {
 		return nil
 	}
-	return r.Customers
+	return r.FavoriteStores
 }
 
 func (r *storeR) GetMenuSetDetails() MenuSetDetailSlice {
@@ -182,20 +224,20 @@ func (r *storeR) GetReservations() ReservationSlice {
 	return r.Reservations
 }
 
-func (r *storeR) GetStaffs() StaffSlice {
+func (r *storeR) GetStoreStaffs() StoreStaffSlice {
 	if r == nil {
 		return nil
 	}
-	return r.Staffs
+	return r.StoreStaffs
 }
 
 // storeL is where Load methods for each relationship are stored.
 type storeL struct{}
 
 var (
-	storeAllColumns            = []string{"store_id", "company_id", "store_name", "address", "phone_number", "business_hours"}
+	storeAllColumns            = []string{"store_id", "company_id", "store_name", "address", "phone_number", "business_hours", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	storeColumnsWithoutDefault = []string{"store_id", "company_id", "store_name", "address", "phone_number", "business_hours"}
-	storeColumnsWithDefault    = []string{}
+	storeColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	storePrimaryKeyColumns     = []string{"store_id"}
 	storeGeneratedColumns      = []string{}
 )
@@ -523,19 +565,18 @@ func (o *Store) ActiveStaffs(mods ...qm.QueryMod) activeStaffQuery {
 	return ActiveStaffs(queryMods...)
 }
 
-// Customers retrieves all the customer's Customers with an executor.
-func (o *Store) Customers(mods ...qm.QueryMod) customerQuery {
+// FavoriteStores retrieves all the favorite_store's FavoriteStores with an executor.
+func (o *Store) FavoriteStores(mods ...qm.QueryMod) favoriteStoreQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.InnerJoin("`favorite_stores` on `customers`.`customer_id` = `favorite_stores`.`customer_id`"),
 		qm.Where("`favorite_stores`.`store_id`=?", o.StoreID),
 	)
 
-	return Customers(queryMods...)
+	return FavoriteStores(queryMods...)
 }
 
 // MenuSetDetails retrieves all the menu_set_detail's MenuSetDetails with an executor.
@@ -608,19 +649,18 @@ func (o *Store) Reservations(mods ...qm.QueryMod) reservationQuery {
 	return Reservations(queryMods...)
 }
 
-// Staffs retrieves all the staff's Staffs with an executor.
-func (o *Store) Staffs(mods ...qm.QueryMod) staffQuery {
+// StoreStaffs retrieves all the store_staff's StoreStaffs with an executor.
+func (o *Store) StoreStaffs(mods ...qm.QueryMod) storeStaffQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.InnerJoin("`store_staff` on `staffs`.`staff_id` = `store_staff`.`staff_id`"),
-		qm.Where("`store_staff`.`store_id`=?", o.StoreID),
+		qm.Where("`store_staffs`.`store_id`=?", o.StoreID),
 	)
 
-	return Staffs(queryMods...)
+	return StoreStaffs(queryMods...)
 }
 
 // LoadCompany allows an eager lookup of values, cached into the
@@ -861,9 +901,9 @@ func (storeL) LoadActiveStaffs(ctx context.Context, e boil.ContextExecutor, sing
 	return nil
 }
 
-// LoadCustomers allows an eager lookup of values, cached into the
+// LoadFavoriteStores allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (storeL) LoadCustomers(ctx context.Context, e boil.ContextExecutor, singular bool, maybeStore interface{}, mods queries.Applicator) error {
+func (storeL) LoadFavoriteStores(ctx context.Context, e boil.ContextExecutor, singular bool, maybeStore interface{}, mods queries.Applicator) error {
 	var slice []*Store
 	var object *Store
 
@@ -917,10 +957,8 @@ func (storeL) LoadCustomers(ctx context.Context, e boil.ContextExecutor, singula
 	}
 
 	query := NewQuery(
-		qm.Select("`customers`.`customer_id`, `customers`.`cognito_user_id`, `customers`.`name`, `customers`.`email`, `customers`.`gender`, `customers`.`birthday`, `a`.`store_id`"),
-		qm.From("`customers`"),
-		qm.InnerJoin("`favorite_stores` as `a` on `customers`.`customer_id` = `a`.`customer_id`"),
-		qm.WhereIn("`a`.`store_id` in ?", args...),
+		qm.From(`favorite_stores`),
+		qm.WhereIn(`favorite_stores.store_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -928,36 +966,22 @@ func (storeL) LoadCustomers(ctx context.Context, e boil.ContextExecutor, singula
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load customers")
+		return errors.Wrap(err, "failed to eager load favorite_stores")
 	}
 
-	var resultSlice []*Customer
-
-	var localJoinCols []int
-	for results.Next() {
-		one := new(Customer)
-		var localJoinCol int
-
-		err = results.Scan(&one.CustomerID, &one.CognitoUserID, &one.Name, &one.Email, &one.Gender, &one.Birthday, &localJoinCol)
-		if err != nil {
-			return errors.Wrap(err, "failed to scan eager loaded results for customers")
-		}
-		if err = results.Err(); err != nil {
-			return errors.Wrap(err, "failed to plebian-bind eager loaded slice customers")
-		}
-
-		resultSlice = append(resultSlice, one)
-		localJoinCols = append(localJoinCols, localJoinCol)
+	var resultSlice []*FavoriteStore
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice favorite_stores")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on customers")
+		return errors.Wrap(err, "failed to close results in eager load on favorite_stores")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for customers")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for favorite_stores")
 	}
 
-	if len(customerAfterSelectHooks) != 0 {
+	if len(favoriteStoreAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -965,25 +989,24 @@ func (storeL) LoadCustomers(ctx context.Context, e boil.ContextExecutor, singula
 		}
 	}
 	if singular {
-		object.R.Customers = resultSlice
+		object.R.FavoriteStores = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &customerR{}
+				foreign.R = &favoriteStoreR{}
 			}
-			foreign.R.Stores = append(foreign.R.Stores, object)
+			foreign.R.Store = object
 		}
 		return nil
 	}
 
-	for i, foreign := range resultSlice {
-		localJoinCol := localJoinCols[i]
+	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if local.StoreID == localJoinCol {
-				local.R.Customers = append(local.R.Customers, foreign)
+			if local.StoreID == foreign.StoreID {
+				local.R.FavoriteStores = append(local.R.FavoriteStores, foreign)
 				if foreign.R == nil {
-					foreign.R = &customerR{}
+					foreign.R = &favoriteStoreR{}
 				}
-				foreign.R.Stores = append(foreign.R.Stores, local)
+				foreign.R.Store = local
 				break
 			}
 		}
@@ -1562,9 +1585,9 @@ func (storeL) LoadReservations(ctx context.Context, e boil.ContextExecutor, sing
 	return nil
 }
 
-// LoadStaffs allows an eager lookup of values, cached into the
+// LoadStoreStaffs allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (storeL) LoadStaffs(ctx context.Context, e boil.ContextExecutor, singular bool, maybeStore interface{}, mods queries.Applicator) error {
+func (storeL) LoadStoreStaffs(ctx context.Context, e boil.ContextExecutor, singular bool, maybeStore interface{}, mods queries.Applicator) error {
 	var slice []*Store
 	var object *Store
 
@@ -1618,10 +1641,8 @@ func (storeL) LoadStaffs(ctx context.Context, e boil.ContextExecutor, singular b
 	}
 
 	query := NewQuery(
-		qm.Select("`staffs`.`staff_id`, `staffs`.`name`, `staffs`.`cognito_user_id`, `a`.`store_id`"),
-		qm.From("`staffs`"),
-		qm.InnerJoin("`store_staff` as `a` on `staffs`.`staff_id` = `a`.`staff_id`"),
-		qm.WhereIn("`a`.`store_id` in ?", args...),
+		qm.From(`store_staffs`),
+		qm.WhereIn(`store_staffs.store_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -1629,36 +1650,22 @@ func (storeL) LoadStaffs(ctx context.Context, e boil.ContextExecutor, singular b
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load staffs")
+		return errors.Wrap(err, "failed to eager load store_staffs")
 	}
 
-	var resultSlice []*Staff
-
-	var localJoinCols []int
-	for results.Next() {
-		one := new(Staff)
-		var localJoinCol int
-
-		err = results.Scan(&one.StaffID, &one.Name, &one.CognitoUserID, &localJoinCol)
-		if err != nil {
-			return errors.Wrap(err, "failed to scan eager loaded results for staffs")
-		}
-		if err = results.Err(); err != nil {
-			return errors.Wrap(err, "failed to plebian-bind eager loaded slice staffs")
-		}
-
-		resultSlice = append(resultSlice, one)
-		localJoinCols = append(localJoinCols, localJoinCol)
+	var resultSlice []*StoreStaff
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice store_staffs")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on staffs")
+		return errors.Wrap(err, "failed to close results in eager load on store_staffs")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for staffs")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for store_staffs")
 	}
 
-	if len(staffAfterSelectHooks) != 0 {
+	if len(storeStaffAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -1666,25 +1673,24 @@ func (storeL) LoadStaffs(ctx context.Context, e boil.ContextExecutor, singular b
 		}
 	}
 	if singular {
-		object.R.Staffs = resultSlice
+		object.R.StoreStaffs = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &staffR{}
+				foreign.R = &storeStaffR{}
 			}
-			foreign.R.Stores = append(foreign.R.Stores, object)
+			foreign.R.Store = object
 		}
 		return nil
 	}
 
-	for i, foreign := range resultSlice {
-		localJoinCol := localJoinCols[i]
+	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if local.StoreID == localJoinCol {
-				local.R.Staffs = append(local.R.Staffs, foreign)
+			if local.StoreID == foreign.StoreID {
+				local.R.StoreStaffs = append(local.R.StoreStaffs, foreign)
 				if foreign.R == nil {
-					foreign.R = &staffR{}
+					foreign.R = &storeStaffR{}
 				}
-				foreign.R.Stores = append(foreign.R.Stores, local)
+				foreign.R.Store = local
 				break
 			}
 		}
@@ -1851,177 +1857,66 @@ func (o *Store) AddActiveStaffs(ctx context.Context, exec boil.ContextExecutor, 
 	return nil
 }
 
-// AddCustomersG adds the given related objects to the existing relationships
+// AddFavoriteStoresG adds the given related objects to the existing relationships
 // of the store, optionally inserting them as new records.
-// Appends related to o.R.Customers.
-// Sets related.R.Stores appropriately.
+// Appends related to o.R.FavoriteStores.
+// Sets related.R.Store appropriately.
 // Uses the global database handle.
-func (o *Store) AddCustomersG(ctx context.Context, insert bool, related ...*Customer) error {
-	return o.AddCustomers(ctx, boil.GetContextDB(), insert, related...)
+func (o *Store) AddFavoriteStoresG(ctx context.Context, insert bool, related ...*FavoriteStore) error {
+	return o.AddFavoriteStores(ctx, boil.GetContextDB(), insert, related...)
 }
 
-// AddCustomers adds the given related objects to the existing relationships
+// AddFavoriteStores adds the given related objects to the existing relationships
 // of the store, optionally inserting them as new records.
-// Appends related to o.R.Customers.
-// Sets related.R.Stores appropriately.
-func (o *Store) AddCustomers(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Customer) error {
+// Appends related to o.R.FavoriteStores.
+// Sets related.R.Store appropriately.
+func (o *Store) AddFavoriteStores(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*FavoriteStore) error {
 	var err error
 	for _, rel := range related {
 		if insert {
+			rel.StoreID = o.StoreID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `favorite_stores` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"store_id"}),
+				strmangle.WhereClause("`", "`", 0, favoriteStorePrimaryKeyColumns),
+			)
+			values := []interface{}{o.StoreID, rel.CustomerID, rel.StoreID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.StoreID = o.StoreID
 		}
 	}
 
-	for _, rel := range related {
-		query := "insert into `favorite_stores` (`store_id`, `customer_id`) values (?, ?)"
-		values := []interface{}{o.StoreID, rel.CustomerID}
-
-		if boil.IsDebug(ctx) {
-			writer := boil.DebugWriterFrom(ctx)
-			fmt.Fprintln(writer, query)
-			fmt.Fprintln(writer, values)
-		}
-		_, err = exec.ExecContext(ctx, query, values...)
-		if err != nil {
-			return errors.Wrap(err, "failed to insert into join table")
-		}
-	}
 	if o.R == nil {
 		o.R = &storeR{
-			Customers: related,
+			FavoriteStores: related,
 		}
 	} else {
-		o.R.Customers = append(o.R.Customers, related...)
+		o.R.FavoriteStores = append(o.R.FavoriteStores, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &customerR{
-				Stores: StoreSlice{o},
+			rel.R = &favoriteStoreR{
+				Store: o,
 			}
 		} else {
-			rel.R.Stores = append(rel.R.Stores, o)
+			rel.R.Store = o
 		}
 	}
 	return nil
-}
-
-// SetCustomersG removes all previously related items of the
-// store replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Stores's Customers accordingly.
-// Replaces o.R.Customers with related.
-// Sets related.R.Stores's Customers accordingly.
-// Uses the global database handle.
-func (o *Store) SetCustomersG(ctx context.Context, insert bool, related ...*Customer) error {
-	return o.SetCustomers(ctx, boil.GetContextDB(), insert, related...)
-}
-
-// SetCustomers removes all previously related items of the
-// store replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Stores's Customers accordingly.
-// Replaces o.R.Customers with related.
-// Sets related.R.Stores's Customers accordingly.
-func (o *Store) SetCustomers(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Customer) error {
-	query := "delete from `favorite_stores` where `store_id` = ?"
-	values := []interface{}{o.StoreID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	removeCustomersFromStoresSlice(o, related)
-	if o.R != nil {
-		o.R.Customers = nil
-	}
-
-	return o.AddCustomers(ctx, exec, insert, related...)
-}
-
-// RemoveCustomersG relationships from objects passed in.
-// Removes related items from R.Customers (uses pointer comparison, removal does not keep order)
-// Sets related.R.Stores.
-// Uses the global database handle.
-func (o *Store) RemoveCustomersG(ctx context.Context, related ...*Customer) error {
-	return o.RemoveCustomers(ctx, boil.GetContextDB(), related...)
-}
-
-// RemoveCustomers relationships from objects passed in.
-// Removes related items from R.Customers (uses pointer comparison, removal does not keep order)
-// Sets related.R.Stores.
-func (o *Store) RemoveCustomers(ctx context.Context, exec boil.ContextExecutor, related ...*Customer) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	query := fmt.Sprintf(
-		"delete from `favorite_stores` where `store_id` = ? and `customer_id` in (%s)",
-		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
-	)
-	values := []interface{}{o.StoreID}
-	for _, rel := range related {
-		values = append(values, rel.CustomerID)
-	}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err = exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-	removeCustomersFromStoresSlice(o, related)
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.Customers {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.Customers)
-			if ln > 1 && i < ln-1 {
-				o.R.Customers[i] = o.R.Customers[ln-1]
-			}
-			o.R.Customers = o.R.Customers[:ln-1]
-			break
-		}
-	}
-
-	return nil
-}
-
-func removeCustomersFromStoresSlice(o *Store, related []*Customer) {
-	for _, rel := range related {
-		if rel.R == nil {
-			continue
-		}
-		for i, ri := range rel.R.Stores {
-			if o.StoreID != ri.StoreID {
-				continue
-			}
-
-			ln := len(rel.R.Stores)
-			if ln > 1 && i < ln-1 {
-				rel.R.Stores[i] = rel.R.Stores[ln-1]
-			}
-			rel.R.Stores = rel.R.Stores[:ln-1]
-			break
-		}
-	}
 }
 
 // AddMenuSetDetailsG adds the given related objects to the existing relationships
@@ -2427,177 +2322,66 @@ func (o *Store) AddReservations(ctx context.Context, exec boil.ContextExecutor, 
 	return nil
 }
 
-// AddStaffsG adds the given related objects to the existing relationships
+// AddStoreStaffsG adds the given related objects to the existing relationships
 // of the store, optionally inserting them as new records.
-// Appends related to o.R.Staffs.
-// Sets related.R.Stores appropriately.
+// Appends related to o.R.StoreStaffs.
+// Sets related.R.Store appropriately.
 // Uses the global database handle.
-func (o *Store) AddStaffsG(ctx context.Context, insert bool, related ...*Staff) error {
-	return o.AddStaffs(ctx, boil.GetContextDB(), insert, related...)
+func (o *Store) AddStoreStaffsG(ctx context.Context, insert bool, related ...*StoreStaff) error {
+	return o.AddStoreStaffs(ctx, boil.GetContextDB(), insert, related...)
 }
 
-// AddStaffs adds the given related objects to the existing relationships
+// AddStoreStaffs adds the given related objects to the existing relationships
 // of the store, optionally inserting them as new records.
-// Appends related to o.R.Staffs.
-// Sets related.R.Stores appropriately.
-func (o *Store) AddStaffs(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Staff) error {
+// Appends related to o.R.StoreStaffs.
+// Sets related.R.Store appropriately.
+func (o *Store) AddStoreStaffs(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*StoreStaff) error {
 	var err error
 	for _, rel := range related {
 		if insert {
+			rel.StoreID = o.StoreID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `store_staffs` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"store_id"}),
+				strmangle.WhereClause("`", "`", 0, storeStaffPrimaryKeyColumns),
+			)
+			values := []interface{}{o.StoreID, rel.StaffID, rel.StoreID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.StoreID = o.StoreID
 		}
 	}
 
-	for _, rel := range related {
-		query := "insert into `store_staff` (`store_id`, `staff_id`) values (?, ?)"
-		values := []interface{}{o.StoreID, rel.StaffID}
-
-		if boil.IsDebug(ctx) {
-			writer := boil.DebugWriterFrom(ctx)
-			fmt.Fprintln(writer, query)
-			fmt.Fprintln(writer, values)
-		}
-		_, err = exec.ExecContext(ctx, query, values...)
-		if err != nil {
-			return errors.Wrap(err, "failed to insert into join table")
-		}
-	}
 	if o.R == nil {
 		o.R = &storeR{
-			Staffs: related,
+			StoreStaffs: related,
 		}
 	} else {
-		o.R.Staffs = append(o.R.Staffs, related...)
+		o.R.StoreStaffs = append(o.R.StoreStaffs, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &staffR{
-				Stores: StoreSlice{o},
+			rel.R = &storeStaffR{
+				Store: o,
 			}
 		} else {
-			rel.R.Stores = append(rel.R.Stores, o)
+			rel.R.Store = o
 		}
 	}
 	return nil
-}
-
-// SetStaffsG removes all previously related items of the
-// store replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Stores's Staffs accordingly.
-// Replaces o.R.Staffs with related.
-// Sets related.R.Stores's Staffs accordingly.
-// Uses the global database handle.
-func (o *Store) SetStaffsG(ctx context.Context, insert bool, related ...*Staff) error {
-	return o.SetStaffs(ctx, boil.GetContextDB(), insert, related...)
-}
-
-// SetStaffs removes all previously related items of the
-// store replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Stores's Staffs accordingly.
-// Replaces o.R.Staffs with related.
-// Sets related.R.Stores's Staffs accordingly.
-func (o *Store) SetStaffs(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Staff) error {
-	query := "delete from `store_staff` where `store_id` = ?"
-	values := []interface{}{o.StoreID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	removeStaffsFromStoresSlice(o, related)
-	if o.R != nil {
-		o.R.Staffs = nil
-	}
-
-	return o.AddStaffs(ctx, exec, insert, related...)
-}
-
-// RemoveStaffsG relationships from objects passed in.
-// Removes related items from R.Staffs (uses pointer comparison, removal does not keep order)
-// Sets related.R.Stores.
-// Uses the global database handle.
-func (o *Store) RemoveStaffsG(ctx context.Context, related ...*Staff) error {
-	return o.RemoveStaffs(ctx, boil.GetContextDB(), related...)
-}
-
-// RemoveStaffs relationships from objects passed in.
-// Removes related items from R.Staffs (uses pointer comparison, removal does not keep order)
-// Sets related.R.Stores.
-func (o *Store) RemoveStaffs(ctx context.Context, exec boil.ContextExecutor, related ...*Staff) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	query := fmt.Sprintf(
-		"delete from `store_staff` where `store_id` = ? and `staff_id` in (%s)",
-		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
-	)
-	values := []interface{}{o.StoreID}
-	for _, rel := range related {
-		values = append(values, rel.StaffID)
-	}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err = exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-	removeStaffsFromStoresSlice(o, related)
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.Staffs {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.Staffs)
-			if ln > 1 && i < ln-1 {
-				o.R.Staffs[i] = o.R.Staffs[ln-1]
-			}
-			o.R.Staffs = o.R.Staffs[:ln-1]
-			break
-		}
-	}
-
-	return nil
-}
-
-func removeStaffsFromStoresSlice(o *Store, related []*Staff) {
-	for _, rel := range related {
-		if rel.R == nil {
-			continue
-		}
-		for i, ri := range rel.R.Stores {
-			if o.StoreID != ri.StoreID {
-				continue
-			}
-
-			ln := len(rel.R.Stores)
-			if ln > 1 && i < ln-1 {
-				rel.R.Stores[i] = rel.R.Stores[ln-1]
-			}
-			rel.R.Stores = rel.R.Stores[:ln-1]
-			break
-		}
-	}
 }
 
 // Stores retrieves all the records using an executor.
@@ -2659,6 +2443,16 @@ func (o *Store) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -2756,6 +2550,12 @@ func (o *Store) UpdateG(ctx context.Context, columns boil.Columns) (int64, error
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Store) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -2904,6 +2704,14 @@ var mySQLStoreUniqueColumns = []string{
 func (o *Store) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no stores provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

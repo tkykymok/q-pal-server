@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,44 +24,86 @@ import (
 
 // MenuSetDetail is an object representing the database table.
 type MenuSetDetail struct {
-	SetID   int `boil:"set_id" json:"set_id" toml:"set_id" yaml:"set_id"`
-	StoreID int `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
-	MenuID  int `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
+	SetID         int       `boil:"set_id" json:"set_id" toml:"set_id" yaml:"set_id"`
+	StoreID       int       `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
+	MenuID        int       `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
+	CreatedAt     time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int  `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string    `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int  `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string    `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *menuSetDetailR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L menuSetDetailL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MenuSetDetailColumns = struct {
-	SetID   string
-	StoreID string
-	MenuID  string
+	SetID         string
+	StoreID       string
+	MenuID        string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	SetID:   "set_id",
-	StoreID: "store_id",
-	MenuID:  "menu_id",
+	SetID:         "set_id",
+	StoreID:       "store_id",
+	MenuID:        "menu_id",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var MenuSetDetailTableColumns = struct {
-	SetID   string
-	StoreID string
-	MenuID  string
+	SetID         string
+	StoreID       string
+	MenuID        string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	SetID:   "menu_set_details.set_id",
-	StoreID: "menu_set_details.store_id",
-	MenuID:  "menu_set_details.menu_id",
+	SetID:         "menu_set_details.set_id",
+	StoreID:       "menu_set_details.store_id",
+	MenuID:        "menu_set_details.menu_id",
+	CreatedAt:     "menu_set_details.created_at",
+	UpdatedAt:     "menu_set_details.updated_at",
+	CreatedBy:     "menu_set_details.created_by",
+	CreatedByType: "menu_set_details.created_by_type",
+	UpdatedBy:     "menu_set_details.updated_by",
+	UpdatedByType: "menu_set_details.updated_by_type",
 }
 
 // Generated where
 
 var MenuSetDetailWhere = struct {
-	SetID   whereHelperint
-	StoreID whereHelperint
-	MenuID  whereHelperint
+	SetID         whereHelperint
+	StoreID       whereHelperint
+	MenuID        whereHelperint
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
-	SetID:   whereHelperint{field: "`menu_set_details`.`set_id`"},
-	StoreID: whereHelperint{field: "`menu_set_details`.`store_id`"},
-	MenuID:  whereHelperint{field: "`menu_set_details`.`menu_id`"},
+	SetID:         whereHelperint{field: "`menu_set_details`.`set_id`"},
+	StoreID:       whereHelperint{field: "`menu_set_details`.`store_id`"},
+	MenuID:        whereHelperint{field: "`menu_set_details`.`menu_id`"},
+	CreatedAt:     whereHelpertime_Time{field: "`menu_set_details`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`menu_set_details`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`menu_set_details`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`menu_set_details`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`menu_set_details`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`menu_set_details`.`updated_by_type`"},
 }
 
 // MenuSetDetailRels is where relationship names are stored.
@@ -101,9 +144,9 @@ func (r *menuSetDetailR) GetStore() *Store {
 type menuSetDetailL struct{}
 
 var (
-	menuSetDetailAllColumns            = []string{"set_id", "store_id", "menu_id"}
+	menuSetDetailAllColumns            = []string{"set_id", "store_id", "menu_id", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	menuSetDetailColumnsWithoutDefault = []string{"set_id", "store_id", "menu_id"}
-	menuSetDetailColumnsWithDefault    = []string{}
+	menuSetDetailColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	menuSetDetailPrimaryKeyColumns     = []string{"set_id", "store_id", "menu_id"}
 	menuSetDetailGeneratedColumns      = []string{}
 )
@@ -837,6 +880,16 @@ func (o *MenuSetDetail) Insert(ctx context.Context, exec boil.ContextExecutor, c
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -936,6 +989,12 @@ func (o *MenuSetDetail) UpdateG(ctx context.Context, columns boil.Columns) (int6
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *MenuSetDetail) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -1082,6 +1141,14 @@ var mySQLMenuSetDetailUniqueColumns = []string{}
 func (o *MenuSetDetail) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no menu_set_details provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

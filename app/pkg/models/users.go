@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,37 +24,79 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID   int    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Name string `boil:"name" json:"name" toml:"name" yaml:"name"`
+	ID            int       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name          string    `boil:"name" json:"name" toml:"name" yaml:"name"`
+	CreatedAt     time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int  `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string    `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int  `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string    `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	ID   string
-	Name string
+	ID            string
+	Name          string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	ID:   "id",
-	Name: "name",
+	ID:            "id",
+	Name:          "name",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var UserTableColumns = struct {
-	ID   string
-	Name string
+	ID            string
+	Name          string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	ID:   "users.id",
-	Name: "users.name",
+	ID:            "users.id",
+	Name:          "users.name",
+	CreatedAt:     "users.created_at",
+	UpdatedAt:     "users.updated_at",
+	CreatedBy:     "users.created_by",
+	CreatedByType: "users.created_by_type",
+	UpdatedBy:     "users.updated_by",
+	UpdatedByType: "users.updated_by_type",
 }
 
 // Generated where
 
 var UserWhere = struct {
-	ID   whereHelperint
-	Name whereHelperstring
+	ID            whereHelperint
+	Name          whereHelperstring
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
-	ID:   whereHelperint{field: "`users`.`id`"},
-	Name: whereHelperstring{field: "`users`.`name`"},
+	ID:            whereHelperint{field: "`users`.`id`"},
+	Name:          whereHelperstring{field: "`users`.`name`"},
+	CreatedAt:     whereHelpertime_Time{field: "`users`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`users`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`users`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`users`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`users`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`users`.`updated_by_type`"},
 }
 
 // UserRels is where relationship names are stored.
@@ -73,9 +116,9 @@ func (*userR) NewStruct() *userR {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "name"}
+	userAllColumns            = []string{"id", "name", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	userColumnsWithoutDefault = []string{"name"}
-	userColumnsWithDefault    = []string{"id"}
+	userColumnsWithDefault    = []string{"id", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )
@@ -437,6 +480,16 @@ func (o *User) Insert(ctx context.Context, exec boil.ContextExecutor, columns bo
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -545,6 +598,12 @@ func (o *User) UpdateG(ctx context.Context, columns boil.Columns) (int64, error)
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *User) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -693,6 +752,14 @@ var mySQLUserUniqueColumns = []string{
 func (o *User) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no users provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

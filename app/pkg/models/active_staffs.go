@@ -28,6 +28,12 @@ type ActiveStaff struct {
 	StoreID            int       `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
 	BreakStartDatetime null.Time `boil:"break_start_datetime" json:"break_start_datetime,omitempty" toml:"break_start_datetime" yaml:"break_start_datetime,omitempty"`
 	BreakEndDatetime   null.Time `boil:"break_end_datetime" json:"break_end_datetime,omitempty" toml:"break_end_datetime" yaml:"break_end_datetime,omitempty"`
+	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy          null.Int  `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType      string    `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy          null.Int  `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType      string    `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *activeStaffR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L activeStaffL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -38,11 +44,23 @@ var ActiveStaffColumns = struct {
 	StoreID            string
 	BreakStartDatetime string
 	BreakEndDatetime   string
+	CreatedAt          string
+	UpdatedAt          string
+	CreatedBy          string
+	CreatedByType      string
+	UpdatedBy          string
+	UpdatedByType      string
 }{
 	StaffID:            "staff_id",
 	StoreID:            "store_id",
 	BreakStartDatetime: "break_start_datetime",
 	BreakEndDatetime:   "break_end_datetime",
+	CreatedAt:          "created_at",
+	UpdatedAt:          "updated_at",
+	CreatedBy:          "created_by",
+	CreatedByType:      "created_by_type",
+	UpdatedBy:          "updated_by",
+	UpdatedByType:      "updated_by_type",
 }
 
 var ActiveStaffTableColumns = struct {
@@ -50,11 +68,23 @@ var ActiveStaffTableColumns = struct {
 	StoreID            string
 	BreakStartDatetime string
 	BreakEndDatetime   string
+	CreatedAt          string
+	UpdatedAt          string
+	CreatedBy          string
+	CreatedByType      string
+	UpdatedBy          string
+	UpdatedByType      string
 }{
 	StaffID:            "active_staffs.staff_id",
 	StoreID:            "active_staffs.store_id",
 	BreakStartDatetime: "active_staffs.break_start_datetime",
 	BreakEndDatetime:   "active_staffs.break_end_datetime",
+	CreatedAt:          "active_staffs.created_at",
+	UpdatedAt:          "active_staffs.updated_at",
+	CreatedBy:          "active_staffs.created_by",
+	CreatedByType:      "active_staffs.created_by_type",
+	UpdatedBy:          "active_staffs.updated_by",
+	UpdatedByType:      "active_staffs.updated_by_type",
 }
 
 // Generated where
@@ -106,16 +136,110 @@ func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
 func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelpertime_Time struct{ field string }
+
+func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+type whereHelpernull_Int struct{ field string }
+
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
+type whereHelperstring struct{ field string }
+
+func (w whereHelperstring) EQ(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperstring) NEQ(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperstring) LT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperstring) LTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperstring) GT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperstring) GTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperstring) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 var ActiveStaffWhere = struct {
 	StaffID            whereHelperint
 	StoreID            whereHelperint
 	BreakStartDatetime whereHelpernull_Time
 	BreakEndDatetime   whereHelpernull_Time
+	CreatedAt          whereHelpertime_Time
+	UpdatedAt          whereHelpertime_Time
+	CreatedBy          whereHelpernull_Int
+	CreatedByType      whereHelperstring
+	UpdatedBy          whereHelpernull_Int
+	UpdatedByType      whereHelperstring
 }{
 	StaffID:            whereHelperint{field: "`active_staffs`.`staff_id`"},
 	StoreID:            whereHelperint{field: "`active_staffs`.`store_id`"},
 	BreakStartDatetime: whereHelpernull_Time{field: "`active_staffs`.`break_start_datetime`"},
 	BreakEndDatetime:   whereHelpernull_Time{field: "`active_staffs`.`break_end_datetime`"},
+	CreatedAt:          whereHelpertime_Time{field: "`active_staffs`.`created_at`"},
+	UpdatedAt:          whereHelpertime_Time{field: "`active_staffs`.`updated_at`"},
+	CreatedBy:          whereHelpernull_Int{field: "`active_staffs`.`created_by`"},
+	CreatedByType:      whereHelperstring{field: "`active_staffs`.`created_by_type`"},
+	UpdatedBy:          whereHelpernull_Int{field: "`active_staffs`.`updated_by`"},
+	UpdatedByType:      whereHelperstring{field: "`active_staffs`.`updated_by_type`"},
 }
 
 // ActiveStaffRels is where relationship names are stored.
@@ -156,9 +280,9 @@ func (r *activeStaffR) GetStore() *Store {
 type activeStaffL struct{}
 
 var (
-	activeStaffAllColumns            = []string{"staff_id", "store_id", "break_start_datetime", "break_end_datetime"}
+	activeStaffAllColumns            = []string{"staff_id", "store_id", "break_start_datetime", "break_end_datetime", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	activeStaffColumnsWithoutDefault = []string{"staff_id", "store_id", "break_start_datetime", "break_end_datetime"}
-	activeStaffColumnsWithDefault    = []string{}
+	activeStaffColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	activeStaffPrimaryKeyColumns     = []string{"staff_id"}
 	activeStaffGeneratedColumns      = []string{}
 )
@@ -892,6 +1016,16 @@ func (o *ActiveStaff) Insert(ctx context.Context, exec boil.ContextExecutor, col
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -989,6 +1123,12 @@ func (o *ActiveStaff) UpdateG(ctx context.Context, columns boil.Columns) (int64,
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *ActiveStaff) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -1137,6 +1277,14 @@ var mySQLActiveStaffUniqueColumns = []string{
 func (o *ActiveStaff) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no active_staffs provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

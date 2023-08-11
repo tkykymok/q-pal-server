@@ -25,58 +25,100 @@ import (
 
 // Menu is an object representing the database table.
 type Menu struct {
-	StoreID  int               `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
-	MenuID   int               `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
-	MenuName null.String       `boil:"menu_name" json:"menu_name,omitempty" toml:"menu_name" yaml:"menu_name,omitempty"`
-	Price    types.NullDecimal `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
-	Time     int               `boil:"time" json:"time" toml:"time" yaml:"time"`
+	StoreID       int               `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
+	MenuID        int               `boil:"menu_id" json:"menu_id" toml:"menu_id" yaml:"menu_id"`
+	MenuName      null.String       `boil:"menu_name" json:"menu_name,omitempty" toml:"menu_name" yaml:"menu_name,omitempty"`
+	Price         types.NullDecimal `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
+	Time          int               `boil:"time" json:"time" toml:"time" yaml:"time"`
+	CreatedAt     time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time         `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy     null.Int          `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType string            `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy     null.Int          `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType string            `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *menuR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L menuL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MenuColumns = struct {
-	StoreID  string
-	MenuID   string
-	MenuName string
-	Price    string
-	Time     string
+	StoreID       string
+	MenuID        string
+	MenuName      string
+	Price         string
+	Time          string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	StoreID:  "store_id",
-	MenuID:   "menu_id",
-	MenuName: "menu_name",
-	Price:    "price",
-	Time:     "time",
+	StoreID:       "store_id",
+	MenuID:        "menu_id",
+	MenuName:      "menu_name",
+	Price:         "price",
+	Time:          "time",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	CreatedBy:     "created_by",
+	CreatedByType: "created_by_type",
+	UpdatedBy:     "updated_by",
+	UpdatedByType: "updated_by_type",
 }
 
 var MenuTableColumns = struct {
-	StoreID  string
-	MenuID   string
-	MenuName string
-	Price    string
-	Time     string
+	StoreID       string
+	MenuID        string
+	MenuName      string
+	Price         string
+	Time          string
+	CreatedAt     string
+	UpdatedAt     string
+	CreatedBy     string
+	CreatedByType string
+	UpdatedBy     string
+	UpdatedByType string
 }{
-	StoreID:  "menus.store_id",
-	MenuID:   "menus.menu_id",
-	MenuName: "menus.menu_name",
-	Price:    "menus.price",
-	Time:     "menus.time",
+	StoreID:       "menus.store_id",
+	MenuID:        "menus.menu_id",
+	MenuName:      "menus.menu_name",
+	Price:         "menus.price",
+	Time:          "menus.time",
+	CreatedAt:     "menus.created_at",
+	UpdatedAt:     "menus.updated_at",
+	CreatedBy:     "menus.created_by",
+	CreatedByType: "menus.created_by_type",
+	UpdatedBy:     "menus.updated_by",
+	UpdatedByType: "menus.updated_by_type",
 }
 
 // Generated where
 
 var MenuWhere = struct {
-	StoreID  whereHelperint
-	MenuID   whereHelperint
-	MenuName whereHelpernull_String
-	Price    whereHelpertypes_NullDecimal
-	Time     whereHelperint
+	StoreID       whereHelperint
+	MenuID        whereHelperint
+	MenuName      whereHelpernull_String
+	Price         whereHelpertypes_NullDecimal
+	Time          whereHelperint
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	CreatedBy     whereHelpernull_Int
+	CreatedByType whereHelperstring
+	UpdatedBy     whereHelpernull_Int
+	UpdatedByType whereHelperstring
 }{
-	StoreID:  whereHelperint{field: "`menus`.`store_id`"},
-	MenuID:   whereHelperint{field: "`menus`.`menu_id`"},
-	MenuName: whereHelpernull_String{field: "`menus`.`menu_name`"},
-	Price:    whereHelpertypes_NullDecimal{field: "`menus`.`price`"},
-	Time:     whereHelperint{field: "`menus`.`time`"},
+	StoreID:       whereHelperint{field: "`menus`.`store_id`"},
+	MenuID:        whereHelperint{field: "`menus`.`menu_id`"},
+	MenuName:      whereHelpernull_String{field: "`menus`.`menu_name`"},
+	Price:         whereHelpertypes_NullDecimal{field: "`menus`.`price`"},
+	Time:          whereHelperint{field: "`menus`.`time`"},
+	CreatedAt:     whereHelpertime_Time{field: "`menus`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`menus`.`updated_at`"},
+	CreatedBy:     whereHelpernull_Int{field: "`menus`.`created_by`"},
+	CreatedByType: whereHelperstring{field: "`menus`.`created_by_type`"},
+	UpdatedBy:     whereHelpernull_Int{field: "`menus`.`updated_by`"},
+	UpdatedByType: whereHelperstring{field: "`menus`.`updated_by_type`"},
 }
 
 // MenuRels is where relationship names are stored.
@@ -107,9 +149,9 @@ func (r *menuR) GetStore() *Store {
 type menuL struct{}
 
 var (
-	menuAllColumns            = []string{"store_id", "menu_id", "menu_name", "price", "time"}
+	menuAllColumns            = []string{"store_id", "menu_id", "menu_name", "price", "time", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	menuColumnsWithoutDefault = []string{"store_id", "menu_id", "menu_name", "price"}
-	menuColumnsWithDefault    = []string{"time"}
+	menuColumnsWithDefault    = []string{"time", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	menuPrimaryKeyColumns     = []string{"store_id", "menu_id"}
 	menuGeneratedColumns      = []string{}
 )
@@ -657,6 +699,16 @@ func (o *Menu) Insert(ctx context.Context, exec boil.ContextExecutor, columns bo
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -755,6 +807,12 @@ func (o *Menu) UpdateG(ctx context.Context, columns boil.Columns) (int64, error)
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Menu) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -901,6 +959,14 @@ var mySQLMenuUniqueColumns = []string{}
 func (o *Menu) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no menus provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

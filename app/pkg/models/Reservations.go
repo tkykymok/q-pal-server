@@ -36,6 +36,12 @@ type Reservation struct {
 	Status               int       `boil:"status" json:"status" toml:"status" yaml:"status"`
 	ArrivalFlag          bool      `boil:"arrival_flag" json:"arrival_flag" toml:"arrival_flag" yaml:"arrival_flag"`
 	CancelType           null.Int  `boil:"cancel_type" json:"cancel_type,omitempty" toml:"cancel_type" yaml:"cancel_type,omitempty"`
+	CreatedAt            time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt            time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CreatedBy            null.Int  `boil:"created_by" json:"created_by,omitempty" toml:"created_by" yaml:"created_by,omitempty"`
+	CreatedByType        string    `boil:"created_by_type" json:"created_by_type" toml:"created_by_type" yaml:"created_by_type"`
+	UpdatedBy            null.Int  `boil:"updated_by" json:"updated_by,omitempty" toml:"updated_by" yaml:"updated_by,omitempty"`
+	UpdatedByType        string    `boil:"updated_by_type" json:"updated_by_type" toml:"updated_by_type" yaml:"updated_by_type"`
 
 	R *reservationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L reservationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -54,6 +60,12 @@ var ReservationColumns = struct {
 	Status               string
 	ArrivalFlag          string
 	CancelType           string
+	CreatedAt            string
+	UpdatedAt            string
+	CreatedBy            string
+	CreatedByType        string
+	UpdatedBy            string
+	UpdatedByType        string
 }{
 	ReservationID:        "reservation_id",
 	CustomerID:           "customer_id",
@@ -67,6 +79,12 @@ var ReservationColumns = struct {
 	Status:               "status",
 	ArrivalFlag:          "arrival_flag",
 	CancelType:           "cancel_type",
+	CreatedAt:            "created_at",
+	UpdatedAt:            "updated_at",
+	CreatedBy:            "created_by",
+	CreatedByType:        "created_by_type",
+	UpdatedBy:            "updated_by",
+	UpdatedByType:        "updated_by_type",
 }
 
 var ReservationTableColumns = struct {
@@ -82,6 +100,12 @@ var ReservationTableColumns = struct {
 	Status               string
 	ArrivalFlag          string
 	CancelType           string
+	CreatedAt            string
+	UpdatedAt            string
+	CreatedBy            string
+	CreatedByType        string
+	UpdatedBy            string
+	UpdatedByType        string
 }{
 	ReservationID:        "reservations.reservation_id",
 	CustomerID:           "reservations.customer_id",
@@ -95,30 +119,15 @@ var ReservationTableColumns = struct {
 	Status:               "reservations.status",
 	ArrivalFlag:          "reservations.arrival_flag",
 	CancelType:           "reservations.cancel_type",
+	CreatedAt:            "reservations.created_at",
+	UpdatedAt:            "reservations.updated_at",
+	CreatedBy:            "reservations.created_by",
+	CreatedByType:        "reservations.created_by_type",
+	UpdatedBy:            "reservations.updated_by",
+	UpdatedByType:        "reservations.updated_by_type",
 }
 
 // Generated where
-
-type whereHelpertime_Time struct{ field string }
-
-func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
-}
-func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
-}
-func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
 
 type whereHelperbool struct{ field string }
 
@@ -142,6 +151,12 @@ var ReservationWhere = struct {
 	Status               whereHelperint
 	ArrivalFlag          whereHelperbool
 	CancelType           whereHelpernull_Int
+	CreatedAt            whereHelpertime_Time
+	UpdatedAt            whereHelpertime_Time
+	CreatedBy            whereHelpernull_Int
+	CreatedByType        whereHelperstring
+	UpdatedBy            whereHelpernull_Int
+	UpdatedByType        whereHelperstring
 }{
 	ReservationID:        whereHelperint{field: "`reservations`.`reservation_id`"},
 	CustomerID:           whereHelperint{field: "`reservations`.`customer_id`"},
@@ -155,6 +170,12 @@ var ReservationWhere = struct {
 	Status:               whereHelperint{field: "`reservations`.`status`"},
 	ArrivalFlag:          whereHelperbool{field: "`reservations`.`arrival_flag`"},
 	CancelType:           whereHelpernull_Int{field: "`reservations`.`cancel_type`"},
+	CreatedAt:            whereHelpertime_Time{field: "`reservations`.`created_at`"},
+	UpdatedAt:            whereHelpertime_Time{field: "`reservations`.`updated_at`"},
+	CreatedBy:            whereHelpernull_Int{field: "`reservations`.`created_by`"},
+	CreatedByType:        whereHelperstring{field: "`reservations`.`created_by_type`"},
+	UpdatedBy:            whereHelpernull_Int{field: "`reservations`.`updated_by`"},
+	UpdatedByType:        whereHelperstring{field: "`reservations`.`updated_by_type`"},
 }
 
 // ReservationRels is where relationship names are stored.
@@ -235,9 +256,9 @@ func (r *reservationR) GetVisitHistories() VisitHistorySlice {
 type reservationL struct{}
 
 var (
-	reservationAllColumns            = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "status", "arrival_flag", "cancel_type"}
+	reservationAllColumns            = []string{"reservation_id", "customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "status", "arrival_flag", "cancel_type", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	reservationColumnsWithoutDefault = []string{"customer_id", "store_id", "staff_id", "reservation_number", "reserved_datetime", "hold_start_datetime", "service_start_datetime", "service_end_datetime", "cancel_type"}
-	reservationColumnsWithDefault    = []string{"reservation_id", "status", "arrival_flag"}
+	reservationColumnsWithDefault    = []string{"reservation_id", "status", "arrival_flag", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	reservationPrimaryKeyColumns     = []string{"reservation_id"}
 	reservationGeneratedColumns      = []string{}
 )
@@ -1958,6 +1979,16 @@ func (o *Reservation) Insert(ctx context.Context, exec boil.ContextExecutor, col
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -2066,6 +2097,12 @@ func (o *Reservation) UpdateG(ctx context.Context, columns boil.Columns) (int64,
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Reservation) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -2214,6 +2251,14 @@ var mySQLReservationUniqueColumns = []string{
 func (o *Reservation) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no reservations provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
