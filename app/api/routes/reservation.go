@@ -7,11 +7,12 @@ import (
 )
 
 func ReservationRouter(app fiber.Router, usecase usecase.ReservationUsecase) {
-	app.Get("/reservations", handlers.GetTodayReservations(usecase))
-	app.Get("/lineEndWaitTime", handlers.GetLineEndWaitTime(usecase))
-	app.Get("/myWaitTime", handlers.GetMyWaitTime(usecase))
-	app.Post("/reservation", handlers.CreateReservation(usecase))
+	app.Get("/reservations/today", handlers.GetTodayReservations(usecase))
+	app.Get("/reservations/line-end-wait-time", handlers.GetLineEndWaitTime(usecase))
+	app.Get("/reservations/my-wait-time", handlers.GetMyWaitTime(usecase))
+	app.Post("/create-reservation", handlers.CreateReservation(usecase))
+	app.Put("/update-reservation/status", handlers.UpdateReservationStatus(usecase))
 
 	// WebSocket
-	app.Get("/ws/reservation", handlers.UpgradeReservationWsHandler(usecase))
+	app.Get("/ws/reservations", handlers.UpgradeReservationWsHandler(usecase))
 }
