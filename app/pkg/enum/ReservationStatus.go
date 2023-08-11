@@ -23,6 +23,14 @@ var ReservationStatusNames = map[ReservationStatus]string{
 	Canceled:   "Canceled",
 }
 
+var ReservationStatusValues = map[string]ReservationStatus{
+	"Waiting":    Waiting,
+	"InProgress": InProgress,
+	"Done":       Done,
+	"Pending":    Pending,
+	"Canceled":   Canceled,
+}
+
 func (r ReservationStatus) String() string {
-	return [...]string{"未案内", "対応中", "案内済", "", "", "保留", "", "", "", "キャンセル"}[r]
+	return [...]string{"未案内", "案内中", "案内済", "", "", "保留", "", "", "", "キャンセル"}[r]
 }

@@ -20,9 +20,13 @@ type ReservationRepository interface {
 
 	ReadLatestReservation(ctx context.Context, storeId int) (models.ReservationSlice, error)
 
+	ReadReservation(ctx context.Context, reservationId int) (*models.Reservation, error)
+
 	ReadHandleTimes(ctx context.Context, storeId int) (*[]exmodels.HandleTime, error)
 
 	InsertReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error)
+
+	UpdateReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error)
 }
 
 type reservationRepository struct {
@@ -128,6 +132,18 @@ func (r reservationRepository) ReadLatestReservation(ctx context.Context, storeI
 	return result, nil
 }
 
+func (r reservationRepository) ReadReservation(ctx context.Context, reservationId int) (*models.Reservation, error) {
+	result, err := models.FindReservationG(ctx, reservationId)
+	if err != nil {
+		return nil, &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "ReadReservation",
+		}
+	}
+
+	return result, nil
+}
+
 // ReadHandleTimes 店舗に紐づく、顧客＆メニューごとの施術時間一覧を取得する
 func (r reservationRepository) ReadHandleTimes(ctx context.Context, storeId int) (*[]exmodels.HandleTime, error) {
 	// SELECTするカラム
@@ -177,6 +193,18 @@ func (r reservationRepository) InsertReservation(ctx context.Context, reservatio
 		return nil, &errors.DatabaseError{
 			InternalError: err,
 			Operation:     "InsertReservation",
+		}
+	}
+
+	return reservation, nil
+}
+
+func (r reservationRepository) UpdateReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error) {
+	_, err := reservation.UpdateG(ctx, boil.Infer())
+	if err != nil {
+		return nil, &errors.DatabaseError{
+			InternalError: err,
+			Operation:     "UpdateReservation",
 		}
 	}
 

@@ -11,7 +11,7 @@ func ReservationRouter(app fiber.Router, usecase usecase.ReservationUsecase) {
 	app.Get("/reservations/line-end-wait-time", handlers.GetLineEndWaitTime(usecase))
 	app.Get("/reservations/my-wait-time", handlers.GetMyWaitTime(usecase))
 	app.Post("/create-reservation", handlers.CreateReservation(usecase))
-	app.Put("/update-reservation/status", handlers.UpdateReservationStatus(usecase))
+	app.Put("/update-reservation", handlers.UpdateReservation(usecase))
 
 	// WebSocket
 	app.Get("/ws/reservations", handlers.UpgradeReservationWsHandler(usecase))

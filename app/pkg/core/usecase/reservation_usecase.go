@@ -9,6 +9,8 @@ import (
 	"app/pkg/usecaseinputs"
 	"app/pkg/usecaseoutputs"
 	"context"
+	"fmt"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"time"
 )
@@ -18,6 +20,7 @@ type ReservationUsecase interface {
 	FetchLineEndWaitTime(ctx context.Context, storeId int) (*usecaseoutputs.WaitTime, error)
 	FetchMyWaitTime(ctx context.Context, storeId int, encryptedText string) (*usecaseoutputs.WaitTime, error)
 	CreateReservation(ctx context.Context, input *usecaseinputs.CreateReservationInput) (*usecaseoutputs.CreateReservation, error)
+	UpdateReservation(ctx context.Context, input *usecaseinputs.UpdateReservationInput) error
 }
 
 type reservationUsecase struct {
@@ -239,4 +242,84 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	}
 
 	return output, nil
+}
+
+func (u reservationUsecase) UpdateReservation(ctx context.Context, input *usecaseinputs.UpdateReservationInput) error {
+	// トランザクション開始する
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		return &errors.UnexpectedError{
+			InternalError: err,
+			Operation:     "Begin Tx",
+		}
+	}
+	// トランザクションをcontextに紐づける
+	ctxWithTx := context.WithValue(ctx, constant.ContextExecutorKey, tx)
+
+	// エラーの場合ロールバックする
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	// ステータスの値を取得する
+	statusVal, exist := enum.ReservationStatusValues[input.Status]
+	if !exist {
+		return &errors.UnexpectedError{
+			InternalError: err,
+			Operation:     "Status not found",
+		}
+	}
+
+	// 保留開始時間、案内開始時間、案内終了時間
+	var holdStartDatetime, serviceStartDatetime, serviceEndDatetime null.Time
+	switch statusVal {
+	case enum.Waiting: // 案内待ちに更新する場合の処理
+		//...
+	case enum.Pending: // 保留に更新する場合の処理
+		// 保留開始時間を設定する
+		holdStartDatetime = null.TimeFrom(time.Now())
+	case enum.InProgress: // 案内中に更新する場合の処理
+		// 案内開始時間を設定する
+		serviceStartDatetime = null.TimeFrom(time.Now())
+	case enum.Canceled: // キャンセルに更新する場合の処理
+		// ...
+	case enum.Done: // 案内済みに更新する場合の処理
+		// 案内終了時間を設定する
+		serviceEndDatetime = null.TimeFrom(time.Now())
+	}
+
+	// 更新対象の予約を取得する
+	uRes, err := u.reservationRepository.ReadReservation(ctxWithTx, input.ReservationID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(uRes)
+
+	// 予約を更新する
+	uRes.StaffID = input.StaffID
+	uRes.HoldStartDatetime = holdStartDatetime
+	uRes.ServiceStartDatetime = serviceStartDatetime
+	uRes.ServiceEndDatetime = serviceEndDatetime
+	uRes.Status = int(statusVal)
+	uRes.ArrivalFlag = false
+	uRes.CancelType = null.Int{}
+
+	_, err = u.reservationRepository.UpdateReservation(ctxWithTx, uRes)
+	if err != nil {
+		return err
+	}
+
+	// トランザクションをコミットする
+	err = tx.Commit()
+	if err != nil {
+		return &errors.UnexpectedError{
+			InternalError: err,
+			Operation:     "Commit Tx",
+		}
+	}
+
+	return nil
 }

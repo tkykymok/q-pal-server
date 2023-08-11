@@ -68,12 +68,13 @@ func GetMyWaitTime(usecase usecase.ReservationUsecase) fiber.Handler {
 	}
 }
 
+// CreateReservation 予約登録
 func CreateReservation(usecase usecase.ReservationUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		var request requests.CreateReservations
+		var request requests.CreateReservation
 		err := c.BodyParser(&request)
 		if err != nil {
 			return err
@@ -92,5 +93,36 @@ func CreateReservation(usecase usecase.ReservationUsecase) fiber.Handler {
 		}
 
 		return c.JSON(presenter.GetCreateReservationResponse(output, message.GetMessage(message.SUCCESS, "予約")))
+	}
+}
+
+func UpdateReservation(usecase usecase.ReservationUsecase) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		customContext, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var request requests.UpdateReservation
+		err := c.BodyParser(&request)
+		if err != nil {
+			return err
+		}
+
+		input := usecaseinputs.UpdateReservationInput{
+			ReservationID: request.ReservationID,
+			StoreID:       2,
+			Status:        request.Status,
+			StaffID:       request.StaffID,
+			MenuID:        request.MenuID,
+		}
+
+		fmt.Println(input)
+
+		err = usecase.UpdateReservation(customContext, &input)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return c.JSON(presenter.ErrorResponse(err))
+		}
+
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "予約更新")))
 	}
 }
