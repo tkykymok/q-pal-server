@@ -9,6 +9,7 @@ import (
 type Reservation struct {
 	ReservationID        int
 	CustomerID           int
+	Name                 null.String
 	StoreID              int
 	StaffID              null.Int
 	ReservationNumber    int

@@ -12,6 +12,7 @@ import (
 type Reservation struct {
 	ReservationID        int               `json:"reservationId" `
 	CustomerID           int               `json:"customerId" `
+	CustomerName         string            `json:"customerName" `
 	StoreID              int               `json:"storeId" `
 	StaffID              null.Int          `json:"staffId" `
 	ReservationNumber    int               `json:"reservationNumber" `
@@ -49,6 +50,7 @@ func GetReservationsResponse(data *[]usecaseoutputs.Reservation) ApiResponse {
 		reservation := Reservation{
 			ReservationID:        t.ReservationID,
 			CustomerID:           t.CustomerID,
+			CustomerName:         utils.CheckString(t.Name),
 			StoreID:              t.StoreID,
 			StaffID:              t.StaffID,
 			ReservationNumber:    t.ReservationNumber,

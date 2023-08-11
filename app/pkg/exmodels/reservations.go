@@ -9,6 +9,7 @@ import (
 type ReservationWithRelated struct {
 	ReservationID        int               `boil:"reservation_id" json:"reservation_id" toml:"reservation_id" yaml:"reservation_id"`
 	CustomerID           int               `boil:"customer_id" json:"customer_id" toml:"customer_id" yaml:"customer_id"`
+	Name                 null.String       `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
 	StoreID              int               `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
 	StaffID              null.Int          `boil:"staff_id" json:"staff_id,omitempty" toml:"staff_id" yaml:"staff_id,omitempty"`
 	ReservationNumber    int               `boil:"reservation_number" json:"reservation_number" toml:"reservation_number" yaml:"reservation_number"`

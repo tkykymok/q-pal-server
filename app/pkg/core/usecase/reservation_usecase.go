@@ -65,6 +65,7 @@ func (u reservationUsecase) FetchTodayReservations(ctx context.Context, storeId 
 		reservation := usecaseoutputs.Reservation{
 			ReservationID:        t.ReservationID,
 			CustomerID:           t.CustomerID,
+			Name:                 t.Name,
 			StoreID:              t.StoreID,
 			StaffID:              t.StaffID,
 			ReservationNumber:    t.ReservationNumber,
@@ -75,6 +76,9 @@ func (u reservationUsecase) FetchTodayReservations(ctx context.Context, storeId 
 			Status:               t.Status,
 			ArrivalFlag:          t.ArrivalFlag,
 			CancelType:           t.CancelType,
+			MenuID:               t.MenuID,
+			MenuName:             t.MenuName,
+			Price:                t.Price,
 			Content:              encryptedText,
 		}
 		reservations = append(reservations, reservation)
