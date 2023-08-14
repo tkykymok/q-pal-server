@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"app/api/message"
 	"app/api/presenter"
+	"app/api/requests"
 	"app/pkg/core/usecase"
+	"app/pkg/usecaseinputs"
 	"context"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
@@ -11,7 +14,6 @@ import (
 // GetStaffs 店舗ごとのスタッフ一覧を取得する
 func GetStaffs(usecase usecase.StaffUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Create cancellable context.
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -22,5 +24,30 @@ func GetStaffs(usecase usecase.StaffUsecase) fiber.Handler {
 			return c.JSON(presenter.ErrorResponse(err))
 		}
 		return c.JSON(presenter.GetStaffsResponse(fetched))
+	}
+}
+
+func CreateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		customContext, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var request requests.AddActiveStaff
+		err := c.BodyParser(&request)
+		if err != nil {
+			return err
+		}
+
+		input := usecaseinputs.CreateActiveStaffInput{
+			StoreID: 2,
+			StaffID: request.StaffId,
+		}
+
+		err = usecase.CreateActiveStaff(customContext, input)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return c.JSON(presenter.ErrorResponse(err))
+		}
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ登録")))
 	}
 }

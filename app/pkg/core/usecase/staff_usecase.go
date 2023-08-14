@@ -2,23 +2,30 @@ package usecase
 
 import (
 	"app/pkg/core/repository"
+	"app/pkg/models"
+	"app/pkg/usecaseinputs"
 	"app/pkg/usecaseoutputs"
 	"context"
 )
 
 type StaffUsecase interface {
 	FetchStaffs(ctx context.Context, storeId int) (*[]usecaseoutputs.Staff, error)
+
+	CreateActiveStaff(ctx context.Context, input usecaseinputs.CreateActiveStaffInput) error
 }
 
 type staffUsecase struct {
-	staffRepository repository.StaffRepository
+	staffRepository       repository.StaffRepository
+	activeStaffRepository repository.ActiveStaffRepository
 }
 
 func NewStaffUsecase(
 	sr repository.StaffRepository,
+	asr repository.ActiveStaffRepository,
 ) StaffUsecase {
 	return &staffUsecase{
-		staffRepository: sr,
+		staffRepository:       sr,
+		activeStaffRepository: asr,
 	}
 }
 
@@ -44,4 +51,27 @@ func (u staffUsecase) FetchStaffs(ctx context.Context, storeId int) (*[]usecaseo
 	}
 
 	return &staffs, nil
+}
+
+func (u staffUsecase) CreateActiveStaff(ctx context.Context, input usecaseinputs.CreateActiveStaffInput) error {
+	// アクティブなスタッフ一覧を取得する
+	activeStaffs, err := u.activeStaffRepository.ReadActiveStaffs(ctx, input.StoreID)
+	if err != nil {
+		return err
+	}
+
+	// 追加するアクティブスタッフの構造体を生成する
+	activeStaff := &models.ActiveStaff{
+		StaffID: input.StaffID,
+		StoreID: input.StoreID,
+		Order:   len(activeStaffs) + 1,
+	}
+
+	// アクティブスタッフを登録する
+	err = u.activeStaffRepository.InsertActiveStaff(ctx, activeStaff)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
