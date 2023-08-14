@@ -56,6 +56,7 @@ func main() {
 	api := app.Group("/api")
 	routes.TodoRouter(api, usecase.NewTodoUsecase(repository.NewTodoRepo()))
 	routes.ReservationRouter(api, usecase.NewReservationUsecase(repository.NewReservationRepo(), repository.NewReservationMenuRepo(), repository.NewActiveStaffRepo()))
+	routes.StaffRouter(api, usecase.NewStaffUsecase(repository.NewStaffRepo()))
 
 	log.Fatal(app.Listen(":8080"))
 }

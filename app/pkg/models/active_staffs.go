@@ -26,6 +26,7 @@ import (
 type ActiveStaff struct {
 	StaffID            int       `boil:"staff_id" json:"staff_id" toml:"staff_id" yaml:"staff_id"`
 	StoreID            int       `boil:"store_id" json:"store_id" toml:"store_id" yaml:"store_id"`
+	Order              int       `boil:"order" json:"order" toml:"order" yaml:"order"`
 	BreakStartDatetime null.Time `boil:"break_start_datetime" json:"break_start_datetime,omitempty" toml:"break_start_datetime" yaml:"break_start_datetime,omitempty"`
 	BreakEndDatetime   null.Time `boil:"break_end_datetime" json:"break_end_datetime,omitempty" toml:"break_end_datetime" yaml:"break_end_datetime,omitempty"`
 	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
@@ -42,6 +43,7 @@ type ActiveStaff struct {
 var ActiveStaffColumns = struct {
 	StaffID            string
 	StoreID            string
+	Order              string
 	BreakStartDatetime string
 	BreakEndDatetime   string
 	CreatedAt          string
@@ -53,6 +55,7 @@ var ActiveStaffColumns = struct {
 }{
 	StaffID:            "staff_id",
 	StoreID:            "store_id",
+	Order:              "order",
 	BreakStartDatetime: "break_start_datetime",
 	BreakEndDatetime:   "break_end_datetime",
 	CreatedAt:          "created_at",
@@ -66,6 +69,7 @@ var ActiveStaffColumns = struct {
 var ActiveStaffTableColumns = struct {
 	StaffID            string
 	StoreID            string
+	Order              string
 	BreakStartDatetime string
 	BreakEndDatetime   string
 	CreatedAt          string
@@ -77,6 +81,7 @@ var ActiveStaffTableColumns = struct {
 }{
 	StaffID:            "active_staffs.staff_id",
 	StoreID:            "active_staffs.store_id",
+	Order:              "active_staffs.order",
 	BreakStartDatetime: "active_staffs.break_start_datetime",
 	BreakEndDatetime:   "active_staffs.break_end_datetime",
 	CreatedAt:          "active_staffs.created_at",
@@ -221,6 +226,7 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 var ActiveStaffWhere = struct {
 	StaffID            whereHelperint
 	StoreID            whereHelperint
+	Order              whereHelperint
 	BreakStartDatetime whereHelpernull_Time
 	BreakEndDatetime   whereHelpernull_Time
 	CreatedAt          whereHelpertime_Time
@@ -232,6 +238,7 @@ var ActiveStaffWhere = struct {
 }{
 	StaffID:            whereHelperint{field: "`active_staffs`.`staff_id`"},
 	StoreID:            whereHelperint{field: "`active_staffs`.`store_id`"},
+	Order:              whereHelperint{field: "`active_staffs`.`order`"},
 	BreakStartDatetime: whereHelpernull_Time{field: "`active_staffs`.`break_start_datetime`"},
 	BreakEndDatetime:   whereHelpernull_Time{field: "`active_staffs`.`break_end_datetime`"},
 	CreatedAt:          whereHelpertime_Time{field: "`active_staffs`.`created_at`"},
@@ -280,8 +287,8 @@ func (r *activeStaffR) GetStore() *Store {
 type activeStaffL struct{}
 
 var (
-	activeStaffAllColumns            = []string{"staff_id", "store_id", "break_start_datetime", "break_end_datetime", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
-	activeStaffColumnsWithoutDefault = []string{"staff_id", "store_id", "break_start_datetime", "break_end_datetime"}
+	activeStaffAllColumns            = []string{"staff_id", "store_id", "order", "break_start_datetime", "break_end_datetime", "created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
+	activeStaffColumnsWithoutDefault = []string{"staff_id", "store_id", "order", "break_start_datetime", "break_end_datetime"}
 	activeStaffColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "created_by_type", "updated_by", "updated_by_type"}
 	activeStaffPrimaryKeyColumns     = []string{"staff_id"}
 	activeStaffGeneratedColumns      = []string{}

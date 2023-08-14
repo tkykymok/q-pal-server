@@ -149,6 +149,7 @@ CREATE TABLE `active_staffs`
 (
     `staff_id`             INT PRIMARY KEY,
     `store_id`             INT          NOT NULL,
+    `order`                INT          NOT NULL,
     `break_start_datetime` DATETIME,
     `break_end_datetime`   DATETIME,
     `created_at`           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -370,22 +371,28 @@ VALUES (2, 3, 1),
 
 -- staffsテーブルへのデータ投入
 INSERT INTO `staffs` (`staff_id`, `name`, `cognito_user_id`)
-VALUES (1, 'Staff A', 'cognitoA'),
-       (2, 'Staff B', 'cognitoB'),
-       (3, 'Staff C', 'cognitoC'),
-       (4, 'Staff D', 'cognitoD');
+VALUES (1, '山田', 'cognitoA'),
+       (2, '鈴木', 'cognitoB'),
+       (3, '坂本', 'cognitoC'),
+       (4, '田中', 'cognitoD'),
+       (5, '小島', 'cognitoE'),
+       (6, '後藤', 'cognitoF'),
+       (7, 'ダミー1', 'cognitoG'),
+       (8, 'ダミー2', 'cognitoH');
 
 -- store_staffテーブルへのデータ投入
 INSERT INTO `store_staffs` (`staff_id`, `store_id`)
-VALUES (1, 1),
-       (2, 1),
+VALUES (1, 2),
+       (2, 2),
        (3, 2),
-       (4, 2);
+       (4, 2),
+       (5, 2),
+       (6, 2),
+       (7, 1),
+       (8, 1);
 
 
-INSERT INTO `active_staffs` (`staff_id`, `store_id`, `break_start_datetime`, `break_end_datetime`)
-VALUES (1, 1, null, null),
-       (2, 1, null, null),
-       (3, 2, null, null),
-       (4, 2, null, null);
+INSERT INTO `active_staffs` (`staff_id`, `store_id`, `order`, `break_start_datetime`, `break_end_datetime`)
+VALUES (1, 2, 1, null, null),
+       (2, 2, 2, null, null);
 
