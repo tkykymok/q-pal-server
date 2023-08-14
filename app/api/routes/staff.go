@@ -9,4 +9,5 @@ import (
 func StaffRouter(app fiber.Router, usecase usecase.StaffUsecase) {
 	app.Get("/staffs", handlers.GetStaffs(usecase))
 	app.Post("/create-active-staff", handlers.CreateActiveStaff(usecase))
+	app.Delete("/remove-active-staff/:staffId", handlers.RemoveActiveStaff(usecase))
 }

@@ -51,3 +51,24 @@ func CreateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ登録")))
 	}
 }
+
+func RemoveActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		customContext, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		staffId, _ := c.ParamsInt("staffId", 0)
+
+		input := usecaseinputs.RemoveActiveStaffInput{
+			StoreID: 2,
+			StaffID: staffId,
+		}
+
+		err := usecase.RemoveActiveStaff(customContext, input)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return c.JSON(presenter.ErrorResponse(err))
+		}
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ削除")))
+	}
+}

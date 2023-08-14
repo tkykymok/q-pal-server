@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"app/api/errors"
+	"app/api/errpkg"
 	"app/pkg/constant"
 	"app/pkg/core/repository"
 	"app/pkg/enum"
@@ -59,7 +59,7 @@ func (u reservationUsecase) FetchTodayReservations(ctx context.Context, storeId 
 		// 予約を特定する暗号化した文字列を生成する
 		encryptedText, err := u.encryptReservation(t.ReservationID, t.StoreID, t.ReservedDatetime)
 		if err != nil {
-			return nil, &errors.UnexpectedError{
+			return nil, &errpkg.UnexpectedError{
 				InternalError: err,
 				Operation:     "encryptReservation",
 			}
@@ -129,7 +129,7 @@ func (u reservationUsecase) FetchMyWaitTime(ctx context.Context, storeId int, en
 	// 暗号化文字列を復号化する
 	reservationInfo, err := u.decryptReservation(encryptedText)
 	if err != nil {
-		return nil, &errors.UnexpectedError{
+		return nil, &errpkg.UnexpectedError{
 			InternalError: err,
 			Operation:     "decryptReservation",
 		}
@@ -169,7 +169,7 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	// トランザクション開始する
 	tx, err := boil.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, &errors.UnexpectedError{
+		return nil, &errpkg.UnexpectedError{
 			InternalError: err,
 			Operation:     "Begin Tx",
 		}
@@ -217,7 +217,7 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	// トランザクションをコミットする
 	err = tx.Commit()
 	if err != nil {
-		return nil, &errors.UnexpectedError{
+		return nil, &errpkg.UnexpectedError{
 			InternalError: err,
 			Operation:     "Commit Tx",
 		}
@@ -229,7 +229,7 @@ func (u reservationUsecase) CreateReservation(ctx context.Context, input *usecas
 	// 予約を特定する暗号化した文字列を生成する
 	encryptedText, err := u.encryptReservation(reservation.ReservationID, reservation.StoreID, reservation.ReservedDatetime)
 	if err != nil {
-		return nil, &errors.UnexpectedError{
+		return nil, &errpkg.UnexpectedError{
 			InternalError: err,
 			Operation:     "encryptReservation",
 		}
@@ -247,7 +247,7 @@ func (u reservationUsecase) UpdateReservation(ctx context.Context, input *usecas
 	// トランザクション開始する
 	tx, err := boil.BeginTx(ctx, nil)
 	if err != nil {
-		return &errors.UnexpectedError{
+		return &errpkg.UnexpectedError{
 			InternalError: err,
 			Operation:     "Begin Tx",
 		}
@@ -265,7 +265,7 @@ func (u reservationUsecase) UpdateReservation(ctx context.Context, input *usecas
 	// ステータスの値を取得する
 	statusVal, exist := enum.ReservationStatusValues[input.Status]
 	if !exist {
-		return &errors.UnexpectedError{
+		return &errpkg.UnexpectedError{
 			InternalError: err,
 			Operation:     "Status not found",
 		}
@@ -308,7 +308,7 @@ func (u reservationUsecase) UpdateReservation(ctx context.Context, input *usecas
 	// トランザクションをコミットする
 	err = tx.Commit()
 	if err != nil {
-		return &errors.UnexpectedError{
+		return &errpkg.UnexpectedError{
 			InternalError: err,
 			Operation:     "Commit Tx",
 		}

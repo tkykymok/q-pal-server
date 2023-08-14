@@ -10,7 +10,7 @@ type UpdateActiveStaffInput struct {
 	StaffID int
 	Order   int
 }
-type DeleteActiveStaffInput struct {
+type RemoveActiveStaffInput struct {
 	StoreID int
 	StaffID int
 }

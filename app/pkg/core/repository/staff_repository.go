@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"app/api/errors"
+	"app/api/errpkg"
 	"app/pkg/exmodels"
 	"app/pkg/models"
 	"context"
@@ -53,7 +53,7 @@ func (s staffRepository) ReadStaffs(ctx context.Context, storeId int) (*[]exmode
 	var result []exmodels.StaffWithRelated
 	err := models.Staffs(mods...).BindG(ctx, &result)
 	if err != nil {
-		return nil, &errors.DatabaseError{
+		return nil, &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "ReadStaffs",
 		}

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"app/api/errors"
+	"app/api/errpkg"
 	"app/pkg/constant"
 	"app/pkg/enum"
 	"app/pkg/exmodels"
@@ -94,7 +94,7 @@ func (r reservationRepository) ReadTodayReservations(ctx context.Context, storeI
 	var result []exmodels.ReservationWithRelated
 	err := models.Reservations(mods...).BindG(ctx, &result)
 	if err != nil {
-		return nil, &errors.DatabaseError{
+		return nil, &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "ReadTodayReservations",
 		}
@@ -123,7 +123,7 @@ func (r reservationRepository) ReadLatestReservation(ctx context.Context, storeI
 
 	result, err := models.Reservations(mods...).AllG(ctx)
 	if err != nil {
-		return nil, &errors.DatabaseError{
+		return nil, &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "ReadLatestReservation",
 		}
@@ -135,7 +135,7 @@ func (r reservationRepository) ReadLatestReservation(ctx context.Context, storeI
 func (r reservationRepository) ReadReservation(ctx context.Context, reservationId int) (*models.Reservation, error) {
 	result, err := models.FindReservationG(ctx, reservationId)
 	if err != nil {
-		return nil, &errors.DatabaseError{
+		return nil, &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "ReadReservation",
 		}
@@ -178,7 +178,7 @@ func (r reservationRepository) ReadHandleTimes(ctx context.Context, storeId int)
 	var result []exmodels.HandleTime
 	err := models.Reservations(mods...).BindG(ctx, &result)
 	if err != nil {
-		return nil, &errors.DatabaseError{
+		return nil, &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "ReadHandleTimes",
 		}
@@ -190,7 +190,7 @@ func (r reservationRepository) ReadHandleTimes(ctx context.Context, storeId int)
 func (r reservationRepository) InsertReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error) {
 	err := reservation.InsertG(ctx, boil.Infer())
 	if err != nil {
-		return nil, &errors.DatabaseError{
+		return nil, &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "InsertReservation",
 		}
@@ -202,7 +202,7 @@ func (r reservationRepository) InsertReservation(ctx context.Context, reservatio
 func (r reservationRepository) UpdateReservation(ctx context.Context, reservation *models.Reservation) (*models.Reservation, error) {
 	_, err := reservation.UpdateG(ctx, boil.Infer())
 	if err != nil {
-		return nil, &errors.DatabaseError{
+		return nil, &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "UpdateReservation",
 		}
