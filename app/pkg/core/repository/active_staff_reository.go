@@ -19,6 +19,8 @@ type ActiveStaffRepository interface {
 	UpdateActiveStaff(ctx context.Context, activeStaff *models.ActiveStaff) error
 
 	DeleteActiveStaff(ctx context.Context, activeStaff *models.ActiveStaff) error
+
+	DeleteActiveStaffs(ctx context.Context, storeId int) error
 }
 
 type activeStaffRepository struct {
@@ -90,6 +92,23 @@ func (r activeStaffRepository) DeleteActiveStaff(ctx context.Context, activeStaf
 		return &errpkg.DatabaseError{
 			InternalError: err,
 			Operation:     "DeleteActiveStaff",
+		}
+	}
+	return nil
+}
+
+func (r activeStaffRepository) DeleteActiveStaffs(ctx context.Context, storeId int) error {
+	// QueryModの生成
+	mods := []qm.QueryMod{
+		qm.Where(fmt.Sprintf("%s = ?", models.ActiveStaffTableColumns.StoreID), storeId),
+	}
+
+	_, err := models.ActiveStaffs(mods...).DeleteAllG(ctx)
+
+	if err != nil {
+		return &errpkg.DatabaseError{
+			InternalError: err,
+			Operation:     "DeleteActiveStaffs",
 		}
 	}
 	return nil

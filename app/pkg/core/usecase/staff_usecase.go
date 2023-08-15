@@ -17,6 +17,8 @@ type StaffUsecase interface {
 
 	CreateActiveStaff(ctx context.Context, input usecaseinputs.CreateActiveStaffInput) error
 
+	UpdateActiveStaff(ctx context.Context, input usecaseinputs.UpdateActiveStaffInput) error
+
 	RemoveActiveStaff(ctx context.Context, input usecaseinputs.RemoveActiveStaffInput) error
 }
 
@@ -82,6 +84,57 @@ func (u staffUsecase) CreateActiveStaff(ctx context.Context, input usecaseinputs
 	return nil
 }
 
+func (u staffUsecase) UpdateActiveStaff(ctx context.Context, input usecaseinputs.UpdateActiveStaffInput) error {
+	// トランザクション開始する
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		return &errpkg.UnexpectedError{
+			InternalError: err,
+			Operation:     "Begin Tx",
+		}
+	}
+	// エラーの場合ロールバックする
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	// トランザクションをcontextに紐づける
+	ctxWithTx := context.WithValue(ctx, constant.ContextExecutorKey, tx)
+
+	// アクティブスタッフを全て削除する
+	err = u.activeStaffRepository.DeleteActiveStaffs(ctxWithTx, input.StoreId)
+	if err != nil {
+		return err
+	}
+
+	for _, t := range input.Data {
+		// 追加するアクティブスタッフの構造体を生成する
+		activeStaff := &models.ActiveStaff{
+			StaffID: t.StaffID,
+			StoreID: input.StoreId,
+			Order:   t.Order,
+		}
+
+		// アクティブスタッフを登録する
+		err = u.activeStaffRepository.InsertActiveStaff(ctx, activeStaff)
+		if err != nil {
+			return err
+		}
+	}
+
+	// トランザクションをコミットする
+	err = tx.Commit()
+	if err != nil {
+		return &errpkg.UnexpectedError{
+			InternalError: err,
+			Operation:     "Commit Tx",
+		}
+	}
+
+	return nil
+}
+
 func (u staffUsecase) RemoveActiveStaff(ctx context.Context, input usecaseinputs.RemoveActiveStaffInput) error {
 	// 削除するアクティブスタッフの構造体を生成する
 	activeStaff := &models.ActiveStaff{
@@ -89,13 +142,10 @@ func (u staffUsecase) RemoveActiveStaff(ctx context.Context, input usecaseinputs
 		StoreID: input.StoreID,
 	}
 
-	// 削除対象アクティブスタッフが存在するかチェック
+	// 削除対象アクティブスタッフを取得する
 	result, err := u.activeStaffRepository.ReadActiveStaff(ctx, activeStaff)
 	if err != nil {
-		return &errpkg.UnexpectedError{
-			InternalError: err,
-			Operation:     "Check Staff Existence",
-		}
+		return err
 	}
 
 	// トランザクション開始する

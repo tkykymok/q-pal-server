@@ -32,7 +32,7 @@ func CreateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		var request requests.AddActiveStaff
+		var request requests.CreateActiveStaff
 		err := c.BodyParser(&request)
 		if err != nil {
 			return err
@@ -49,6 +49,41 @@ func CreateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 			return c.JSON(presenter.ErrorResponse(err))
 		}
 		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ登録")))
+	}
+}
+
+func UpdateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		customContext, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var request requests.UpdateActiveStaff
+		err := c.BodyParser(&request)
+		if err != nil {
+			return err
+		}
+
+		data := make([]usecaseinputs.UpdateActiveStaffData, 0)
+		for _, t := range request.Data {
+			temp := usecaseinputs.UpdateActiveStaffData{
+				StaffID: t.StaffId,
+				Order:   t.Order,
+			}
+
+			data = append(data, temp)
+		}
+
+		input := usecaseinputs.UpdateActiveStaffInput{
+			StoreId: 2,
+			Data:    data,
+		}
+
+		err = usecase.UpdateActiveStaff(customContext, input)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return c.JSON(presenter.ErrorResponse(err))
+		}
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ更新")))
 	}
 }
 
