@@ -27,6 +27,7 @@ func GetStaffs(usecase usecase.StaffUsecase) fiber.Handler {
 	}
 }
 
+// CreateActiveStaff 対応スタッフを登録する
 func CreateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
@@ -48,11 +49,12 @@ func CreateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
 		}
-		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ登録")))
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "対応スタッフの登録")))
 	}
 }
 
-func UpdateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
+// UpdateActiveStaffs 対応スタッフを更新する
+func UpdateActiveStaffs(usecase usecase.StaffUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -83,10 +85,11 @@ func UpdateActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
 		}
-		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ更新")))
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "対応スタッフの更新")))
 	}
 }
 
+// RemoveActiveStaff 対応スタッフを削除する
 func RemoveActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customContext, cancel := context.WithCancel(context.Background())
@@ -104,6 +107,6 @@ func RemoveActiveStaff(usecase usecase.StaffUsecase) fiber.Handler {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(presenter.ErrorResponse(err))
 		}
-		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "アクティブスタッフ削除")))
+		return c.JSON(presenter.GetSuccessResponse(message.GetMessage(message.SUCCESS, "対応スタッフの削除")))
 	}
 }
